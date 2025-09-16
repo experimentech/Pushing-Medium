@@ -1,0 +1,27 @@
+\begin{tikzpicture}[node distance=2cm,>=stealth,thick]
+\tikzstyle{block} = [rectangle, draw, rounded corners, align=center, fill=blue!10]
+\tikzstyle{data} = [rectangle, draw, align=center, fill=green!10]
+\tikzstyle{calc} = [rectangle, draw, align=center, fill=orange!10]
+
+% Nodes
+\node[data] (bodies) {Body positions $\mathbf{r}_i(t)$ \\ and masses $M_i$};
+\node[calc, right=of bodies] (nfield) {Compute $n(\mathbf{r})$ \\ and $\nabla n(\mathbf{r})$ \
+
+\[0.3em] \scriptsize Static + TT wave};
+\node[calc, below=of nfield] (flow) {Compute $\mathbf{u}_g(\mathbf{r})$ \\ (frame-drag analogue)};
+\node[calc, right=of nfield, xshift=4cm] (fermat) {Fermat ray step: \\ update $\mathbf{k}$ and $\mathbf{r}$};
+\node[data, above=of fermat] (rays) {Ray positions $\mathbf{r}$ \\ and directions $\mathbf{k}$};
+
+% Arrows
+\draw[->] (bodies) -- (nfield);
+\draw[->] (bodies) |- (flow);
+\draw[->] (nfield) -- (fermat);
+\draw[->] (flow) -| (fermat);
+\draw[->] (rays) -- (fermat);
+\draw[->] (fermat) |- (rays);
+
+% Labels
+\node[below=0.1cm of bodies] {\scriptsize N-body integrator updates $\mathbf{r}_i(t)$ each tick};
+\node[below=0.1cm of fermat] {\scriptsize Uses $\nabla n$ and $\mathbf{u}_g$ to bend/advect rays};
+\end{tikzpicture}
+

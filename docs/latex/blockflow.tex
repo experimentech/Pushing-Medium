@@ -1,0 +1,32 @@
+\begin{tikzpicture}[node distance=2.5cm,>=stealth,thick]
+\tikzstyle{block} = [rectangle, draw, rounded corners, align=center, fill=blue!10, text width=4cm]
+\tikzstyle{calc} = [rectangle, draw, align=center, fill=orange!10, text width=5cm]
+\tikzstyle{data} = [rectangle, draw, align=center, fill=green!10, text width=4cm]
+
+% Nodes
+\node[data] (bodies) {Bodies: $\mathbf{r}_i(t), M_i$ \
+
+\[0.3em] \scriptsize Updated by N-body integrator};
+\node[calc, right=of bodies] (nfield) {$n(\mathbf{r}) = 1 + \sum_i \frac{2GM_i}{c^2 |\mathbf{r}-\mathbf{r}_i|}$ \
+
+\[0.3em]
+$\nabla n(\mathbf{r}) = -\sum_i \frac{2GM_i}{c^2 |\mathbf{r}-\mathbf{r}_i|^3} (\mathbf{r}-\mathbf{r}_i)$};
+\node[calc, below=of nfield] (flow) {$\mathbf{u}_g(\mathbf{r}) = \sum_i \frac{M_i\,\hat{\mathbf{z}}\times(\mathbf{r}-\mathbf{r}_i)}{|\mathbf{r}-\mathbf{r}_i|^2+\varepsilon^2}$};
+\node[data, above right=3cm and 5cm of nfield] (rays) {Rays: $\mathbf{r}, \mathbf{k}$};
+\node[calc, below=of rays] (fermat) {Fermat step: \
+
+\[0.3em]
+$\mathbf{k}_{\text{new}} = \frac{\mathbf{k} + \frac{\mathrm{d}s}{n} \left[ \nabla n - (\mathbf{k}\cdot\nabla n)\,\mathbf{k} \right]}{\|\cdots\|}$ \
+
+\[0.3em]
+$\mathbf{r}_{\text{new}} = \mathbf{r} + \mathbf{k}_{\text{new}}\,\mathrm{d}s$};
+
+% Arrows
+\draw[->] (bodies) -- node[above]{\scriptsize positions, masses} (nfield);
+\draw[->] (bodies) |- node[left]{\scriptsize positions, masses} (flow);
+\draw[->] (nfield) -- node[above]{\scriptsize $n$, $\nabla n$} (fermat);
+\draw[->] (flow) -| node[right]{\scriptsize $\mathbf{u}_g$} (fermat);
+\draw[->] (rays) -- node[right]{\scriptsize current $\mathbf{r},\mathbf{k}$} (fermat);
+\draw[->] (fermat) |- node[left]{\scriptsize updated $\mathbf{r},\mathbf{k}$} (rays);
+\end{tikzpicture}
+

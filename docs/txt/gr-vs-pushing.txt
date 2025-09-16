@@ -1,0 +1,57 @@
+Perfect — here’s how I’d lay out the **GR vs Pushing‑Medium** overlay as a clean, talk‑ready slide concept, so you can drop it straight into a deck or proposal.  
+
+---
+
+## **Slide Title:**  
+**Two Pictures, Same Predictions — GR vs Pushing‑Medium**
+
+---
+
+### **Layout**
+
+**Left column — General Relativity (geometry view)**  
+- **Visual:** Stylised spacetime grid warped by a mass.  
+- **Core objects:**  
+  - Metric \(g_{\mu\nu}\)  
+  - Christoffel symbols \(\Gamma^\mu_{\alpha\beta}\)  
+  - Einstein field equations \(G_{\mu\nu} = 8\pi T_{\mu\nu}\)  
+  - Geodesic equation  
+  - TT wave equation \(\Box h^{\mathrm{TT}} = 0\)  
+- **Interpretation:** Gravity = curvature; light cones from metric.
+
+**Right column — Pushing‑Medium (optical‑medium view)**  
+- **Visual:** Flowing refractive‑index field with embedded vector flows.  
+- **Core objects:**  
+  - Index mapping \(n(\rho_s)\)  
+  - Rotational flow \(\omega_s(r) = \frac{2GJ}{c^2 r^3}\)  
+  - Translational flow \(\mathbf{u}_g\) from \(\Box \mathbf{u}_g = \kappa_J\,\mathbf{J}_{\mathrm{TT}}\)  
+  - Fermat functional \(T = \int n\,ds - \frac{1}{c}\int (n^2-1)(\mathbf{u}_g\cdot\hat{\mathbf{k}})\,ds\)  
+  - Symmetric‑hyperbolic PDE system for \((n,\mathbf{v},h^{\mathrm{TT}})\)  
+- **Interpretation:** Gravity = effective optics in a physical medium; causality from characteristic speeds.
+
+---
+
+### **Centre — Mapping arrows**
+
+| GR concept | Pushing‑Medium analogue |
+|------------|-------------------------|
+| \(g_{\mu\nu}\) (metric) | \(n(\rho_s),\ \mathbf{u}_g\) (index + flow) |
+| Geodesics | Fermat stationary‑time paths |
+| Christoffels \(\Gamma^\mu_{\alpha\beta}\) | \(\nabla n,\ \nabla \mathbf{u}_g\) |
+| \(G_{\mu\nu}=8\pi T_{\mu\nu}\) | Symmetric‑hyperbolic PDEs with energy norm |
+| TT waves | TT wave channel, \(v_g=c\) |
+| Frame‑drag (spin) | \(\omega_s(r)\) identical form |
+| Moving‑lens vector potential | Retarded \(\mathbf{u}_g\) with Fizeau term |
+| \(\nabla_\mu T^{\mu\nu}=0\) | Energy identity \(\partial_t\mathcal{E}+\partial_k\mathcal{F}^k=0\) |
+
+---
+
+### **Slide flow**
+
+1. **Top:** Two labelled diagrams (spacetime grid vs refractive‑index field).  
+2. **Middle:** Table of formula correspondences.  
+3. **Bottom:** Tagline — *“Different language, same measurable predictions — so far.”*
+
+---
+
+If you like, I can also prepare a **condensed “formula‑mapping table”** in the same style as above, but stripped to just the paired equations and one‑line mapping, so it’s a quick‑glance handout for a technical audience. That would complement the slide visually and give them something to take away. Would you like me to do that next?

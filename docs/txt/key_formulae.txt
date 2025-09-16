@@ -1,0 +1,78 @@
+# Diagrammatic overlay
+
+Attached: “General Relativity vs Pushing‑Medium Gravity” diagram with labeled components and arrows mapping geometric to optical‑medium quantities.
+
+---
+
+## Summary of correspondences
+
+- **Metric ↔ Medium structure:**  
+  - **GR:** Metric tensor \(g_{\mu\nu}\) encodes curvature and causal structure.  
+  - **Pushing‑medium:** Index mapping \(n(\rho_s)\) and retarded vector flow \(\mathbf{u}_g\) encode optical geometry and gravito‑magnetism.
+
+- **Geodesics ↔ Fermat paths:**  
+  - **GR:** Test bodies/light follow geodesics derived from \(\Gamma^\mu_{\alpha\beta}\).  
+  - **Pushing‑medium:** Light follows stationary‑time paths from Fermat’s principle in a moving medium; massive motion follows the substrate push law consistent with PPN.
+
+- **Connections ↔ Gradients:**  
+  - **GR:** Christoffel symbols from metric gradients.  
+  - **Pushing‑medium:** Deflection from \(\nabla n\) and advection via \(\nabla \mathbf{u}_g\).
+
+- **Einstein equations ↔ Substrate PDEs:**  
+  - **GR:** \(G_{\mu\nu}=8\pi T_{\mu\nu}\).  
+  - **Pushing‑medium:** Symmetric‑hyperbolic PDEs for \((n,\mathbf{v},h^{\mathrm{TT}})\) with energy norm and conservation.
+
+- **TT waves ↔ TT wave channel:**  
+  - **GR:** Tensor, transverse–traceless GWs, \(v_g=c\).  
+  - **Pushing‑medium:** Linear TT wave sector with \(\Box h^{\mathrm{TT}}=\mathcal{S}^{\mathrm{TT}}\), \(v_g=c\).
+
+---
+
+## Key formulae side by side
+
+| Concept | GR expression | Pushing‑medium expression | Link |
+|---|---|---|---|
+| Spacetime/medium | Line element: \(ds^2=g_{\mu\nu}dx^\mu dx^\nu\) | Optical medium: \(n=n(\rho_s)\), retarded flow \(\mathbf{u}_g\) | \(g_{\mu\nu} \leftrightarrow \{n,\mathbf{u}_g\}\) |
+| Geodesics/paths | \(\displaystyle \frac{d^2x^\mu}{d\lambda^2}+\Gamma^\mu_{\alpha\beta}\frac{dx^\alpha}{d\lambda}\frac{dx^\beta}{d\lambda}=0\) | \(\displaystyle \delta\!\left[\int n\,ds-\frac{1}{c}\int (n^2-1)(\mathbf{u}_g\!\cdot\!\hat{\mathbf{k}})\,ds\right]=0\) | Geodesics ↔ Fermat |
+| Connection/gradients | \(\displaystyle \Gamma^\mu_{\alpha\beta}=\tfrac12 g^{\mu\nu}(\partial_\alpha g_{\nu\beta}+\partial_\beta g_{\nu\alpha}-\partial_\nu g_{\alpha\beta})\) | Deflection drivers: \(\nabla n,\ \nabla \mathbf{u}_g\) | Christoffels ↔ gradients |
+| Field equations | \(G_{\mu\nu}=8\pi T_{\mu\nu}\) | First‑order symmetric‑hyperbolic: \(A^0\partial_t\mathbf{U}+A^k\partial_k\mathbf{U}=\mathbf{R}(\mathbf{U})\) | Dynamics ↔ PDEs |
+| GW sector | \(\Box h_{ij}^{\mathrm{TT}}=0\) (in vacuum), \(v_g=c\) | \(\Box h_{ij}^{\mathrm{TT}}=\mathcal{S}_{ij}^{\mathrm{TT}},\ v_g=c\) | TT ↔ TT |
+| Spin frame‑drag | \(\boldsymbol{\omega}=\tfrac{2G\mathbf{J}}{c^2 r^3}\) | \(\boldsymbol{\omega}_s(r)=\tfrac{2G\mathbf{J}}{c^2 r^3}\) | Identical |
+| Moving lens (vt/c) | Vector potential from mass current \(V_i\) contributes to deflection | Retarded \(\mathbf{u}_g\) from \(\mathbf{J}=\rho\,\mathbf{v}\) enters Fermat functional | Same sign/magnitude after shared normalization |
+| Energy/conservation | \(\nabla_\mu T^{\mu\nu}=0\) | Energy identity: \(\partial_t\mathcal{E}+\partial_k\mathcal{F}^k=\mathbf{U}^\top S\,\mathbf{R}\) | Conservation ↔ flux balance |
+
+---
+
+## Interpretation differences
+
+- **Geometry vs medium:**  
+  - **GR:** Gravity is curvature; light cones from metric.  
+  - **Pushing‑medium:** Gravity is effective optics in a physical medium; causality from characteristic speeds with \(c_s\le c\) and TT waves at \(c\).
+
+- **Degrees of freedom:**  
+  - **GR:** Metric components subject to constraints/gauge.  
+  - **Pushing‑medium:** Scalar density \(n\), momentum \(n\mathbf{v}\), and TT field \(h^{\mathrm{TT}}\) with a block‑diagonal symmetrizer.
+
+- **Gravito‑magnetism:**  
+  - **GR:** Encoded in off‑diagonal metric components and vector potential.  
+  - **Pushing‑medium:** Explicit retarded flow \(\mathbf{u}_g\) (translation) and \(\omega_s\) (rotation) with Fizeau‑type coupling to photons.
+
+---
+
+## Included formula callouts on the diagram
+
+- **GR side:**  
+  - Einstein eq: \(G_{\mu\nu}=8\pi T_{\mu\nu}\)  
+  - Geodesics: as above  
+  - Christoffels: as above  
+  - Line element: \(ds^2=g_{\mu\nu}dx^\mu dx^\nu\)
+
+- **Pushing‑medium side:**  
+  - Fermat functional: \(T=\int n\,ds-\frac{1}{c}\int(n^2-1)(\mathbf{u}_g\cdot\hat{\mathbf{k}})\,ds\)  
+  - Retarded flow: \(\Box \mathbf{u}_g=\kappa_J\,\mathbf{J}_{\mathrm{TT}}\)  
+  - PDE form: \(A^0\partial_t\mathbf{U}+A^k\partial_k\mathbf{U}=\mathbf{R}(\mathbf{U})\)  
+  - Energy: \(\mathcal{E}=\tfrac12\big[\tfrac{P'(n)}{n}n^2+\tfrac{|n\mathbf{v}|^2}{n}+|p|^2+c^2|q|^2\big]\)
+
+---
+
+If you want, I can export a clean slide version with a light/dark theme and high‑contrast math, plus an appendix slide that expands each correspondence with a 2–3 line explanation for talks.

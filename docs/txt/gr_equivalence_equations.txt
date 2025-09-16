@@ -1,0 +1,101 @@
+Right — if you take the **pushing‑medium** view seriously, you can’t just drop it into GR’s field equations unchanged. The whole cause/effect chain is different, so several of the “core” GR relations either get replaced or re‑interpreted.  
+
+Here’s a breakdown of the main ones that change, and how:
+
+---
+
+## **1. Einstein Field Equations (EFE)**
+**GR form:**  
+\[
+G_{\mu\nu} + \Lambda g_{\mu\nu} = \frac{8\pi G}{c^4} T_{\mu\nu}
+\]  
+- **What changes:** In the pushing‑medium model, spacetime curvature \(G_{\mu\nu}\) is *not* the fundamental cause of motion — it’s an emergent descriptor of the substrate’s state.  
+- **Replacement:** A substrate‑state equation that relates **density/pressure gradients** and **flow** in the medium to the acceleration of embedded matter.  
+  - Geometry becomes a *derived* quantity from the substrate’s density/pressure field, not the primary unknown.
+
+---
+
+## **2. Geodesic Equation**
+**GR form:**  
+\[
+\frac{d^2 x^\mu}{d\tau^2} + \Gamma^\mu_{\alpha\beta} \frac{dx^\alpha}{d\tau} \frac{dx^\beta}{d\tau} = 0
+\]  
+- **What changes:** In GR, free‑fall follows geodesics of curved spacetime.  
+- **Replacement:** Particle motion obeys a **force law**:  
+\[
+\frac{d\mathbf{v}}{dt} = -\frac{1}{\rho_s} \nabla P_s
+\]  
+where \(\rho_s\) and \(P_s\) are substrate density and pressure. The Christoffel symbols are replaced by gradients in the substrate state.
+
+---
+
+## **3. Poisson Equation (Newtonian limit)**
+**GR/Newton form:**  
+\[
+\nabla^2 \Phi = 4\pi G \rho
+\]  
+- **What changes:** The potential \(\Phi\) is no longer a primitive; it’s a shorthand for the integrated substrate pressure/density field.  
+- **Replacement:**  
+\[
+\nabla \cdot \left( \frac{1}{\rho_s} \nabla P_s \right) = S(\text{mass distribution})
+\]  
+with \(S\) encoding how matter displaces/compresses the substrate.
+
+---
+
+## **4. Gravitational Time Dilation**
+**GR form:**  
+\[
+\frac{\Delta t_{\text{far}}}{\Delta t_{\text{near}}} \approx 1 + \frac{\Phi}{c^2}
+\] (weak field)  
+- **What changes:** Time rate is tied to **local substrate density/pressure**, not directly to \(\Phi\).  
+- **Replacement:**  
+\[
+\frac{\Delta t_{\text{far}}}{\Delta t_{\text{near}}} = f\!\left( \frac{\rho_s(\text{near})}{\rho_s(\text{far})} \right)
+\]  
+where \(f\) is calibrated so that in the weak‑field limit it matches the GR slope.
+
+---
+
+## **5. Light Propagation**
+**GR form:** Light follows null geodesics \(ds^2 = 0\) in curved spacetime.  
+- **What changes:** Light speed is constant *in the substrate frame*, but the **effective index of refraction** \(n(\mathbf{x})\) depends on substrate density.  
+- **Replacement:** Ray paths satisfy Fermat’s principle in a medium with \(n(\mathbf{x})\), giving bending and Shapiro delay as optical‑path effects.
+
+---
+
+## **6. Cosmological Dynamics (Friedmann Equations)**
+**GR form:**  
+\[
+\left(\frac{\dot{a}}{a}\right)^2 = \frac{8\pi G}{3} \rho - \frac{k}{a^2} + \frac{\Lambda}{3}
+\]  
+- **What changes:** The acceleration term comes from **substrate elasticity/back‑reaction**, not Λ.  
+- **Replacement:**  
+\[
+\left(\frac{\dot{a}}{a}\right)^2 = \frac{8\pi G}{3} \rho_m + E(a) - \frac{k}{a^2}
+\]  
+where \(E(a)\) is the substrate’s stored‑strain term, tunable in onset and width.
+
+---
+
+## **7. Stress–Energy Tensor**
+**GR form:** \(T_{\mu\nu}\) encodes matter/energy and pressure in spacetime.  
+- **What changes:** The substrate itself has its own stress–energy, which can be anisotropic, have memory, or exhibit hysteresis.  
+- **Replacement:**  
+\[
+T_{\mu\nu} \to T_{\mu\nu}^{\text{matter}} + T_{\mu\nu}^{\text{substrate}}
+\]  
+with \(T_{\mu\nu}^{\text{substrate}}\) derived from the medium’s density, pressure, anisotropy, and flow fields.
+
+---
+
+### In short:
+- **Curvature** is demoted from cause to *description*.  
+- **Force laws** replace geodesics.  
+- **Potential** is replaced by substrate state variables.  
+- **Time and light** effects come from local medium properties.  
+- **Cosmic acceleration** comes from medium elasticity, not Λ.
+
+---
+
+If you like, I can put these into a **side‑by‑side “GR vs pushing‑medium” table** so a reviewer can instantly see which equations are swapped, what replaces them, and how the weak‑field limits line up. That would make the changes very explicit. Would you like me to do that next?

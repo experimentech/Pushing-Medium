@@ -1,0 +1,149 @@
+# Formula sheet
+
+> One page of the core equations only. No prose, no derivations.
+
+---
+
+### Substrate fluid (barotropic)
+
+- **Continuity:**
+  
+  \[
+  \partial_t n + \partial_j(n v_j) = 0
+  \]
+
+- **Momentum:**
+  
+  \[
+  \partial_t(n v_i) + \partial_j\!\left(n v_i v_j + \delta_{ij}P(n)\right) = \mathcal{F}_i
+  \]
+
+- **Sound speed:**
+  
+  \[
+  c_s^2 = \frac{dP}{dn} \le c^2
+  \]
+
+---
+
+### Gravito-magnetic flows
+
+- **Rotational (spin):**
+  
+  \[
+  \omega_s(r) = \frac{2 G J}{c^2 r^3}
+  \]
+
+- **Translational (mass current, retarded):**
+  
+  \[
+  \frac{1}{c^2}\frac{\partial^2 \mathbf{u}_g}{\partial t^2} - \nabla^2 \mathbf{u}_g = \kappa_J\,\mathbf{J}_{\mathrm{TT}},\quad \mathbf{J}=\rho\,\mathbf{v}
+  \]
+
+---
+
+### Photon propagation (moving-medium Fermat)
+
+- **Travel time functional:**
+  
+  \[
+  T = \int n\,ds - \frac{1}{c}\int (n^2 - 1)\,(\mathbf{u}_g\cdot\hat{\mathbf{k}})\,ds
+  \]
+
+---
+
+### Wave sector (tensor transverse–traceless)
+
+- **TT wave equation:**
+  
+  \[
+  \Box h_{ij}^{\mathrm{TT}} = \mathcal{S}_{ij}^{\mathrm{TT}},\qquad \Box \equiv \frac{1}{c^2}\partial_t^2 - \nabla^2
+  \]
+
+- **First-order variables:**
+  
+  \[
+  p_{ij}=\partial_t h_{ij}^{\mathrm{TT}},\quad q_{kij}=\partial_k h_{ij}^{\mathrm{TT}}
+  \]
+
+---
+
+### Symmetric-hyperbolic structure
+
+- **State vector:**
+  
+  \[
+  \mathbf{U}=(n,\ m_i,\ h_{ij}^{\mathrm{TT}},\ p_{ij},\ q_{kij}),\quad m_i\equiv n v_i
+  \]
+
+- **System form:**
+  
+  \[
+  A^0(\mathbf{U})\,\partial_t \mathbf{U} + A^k(\mathbf{U})\,\partial_k \mathbf{U} = \mathbf{R}(\mathbf{U})
+  \]
+
+- **Symmetrizer (block-diagonal):**
+  
+  \[
+  S_{\mathrm{fl}}=\mathrm{diag}\!\left(\frac{P'(n)}{n},\ \frac{1}{n}\mathbb{I}_3\right),\quad S_{\mathrm{TT}}=\mathrm{diag}\!\left(\mathbb{I},\ c^2\mathbb{I}\right)
+  \]
+
+- **Energy norm:**
+  
+  \[
+  \mathcal{E}=\tfrac{1}{2}\left[\frac{P'(n)}{n}\,n^2+\frac{|m|^2}{n}+|p_{ij}|^2+c^2|q_{kij}|^2\right]
+  \]
+
+- **Energy identity and boundary flux:**
+  
+  \[
+  \partial_t \mathcal{E} + \partial_k \mathcal{F}^k = \mathbf{U}^{\!\top}S\,\mathbf{R}(\mathbf{U}),\qquad \mathcal{F}^k=\tfrac{1}{2}\mathbf{U}^{\!\top} S A^k \mathbf{U}
+  \]
+
+- **Characteristic speeds:**
+  
+  \[
+  \lambda_\pm=v_n\pm c_s,\ \lambda_0=v_n,\ \lambda_{\mathrm{TT}}=\pm c
+  \]
+
+---
+
+### Cosmology-lite
+
+- **Hubble law analogue:**
+  
+  \[
+  H^2(a)=\left(\frac{\dot{a}}{a}\right)^2=\frac{8\pi G_{\mathrm{eff}}}{3}\rho_{\mathrm{tot}} - \frac{k}{a^2} + \frac{\Lambda_{\mathrm{eff}}}{3}
+  \]
+
+- **Distances:**
+  
+  \[
+  D_C(z)=\int_0^z \frac{c\,dz'}{H(z')},\quad D_L=(1+z)D_C,\quad D_A=\frac{D_C}{1+z}
+  \]
+
+- **Growth (subhorizon):**
+  
+  \[
+  \delta'' + \left(2 + \frac{H'}{H}\right)\delta' - \frac{3}{2}\,\Omega_m(a)\,\delta = 0,\quad (\,{}' \equiv d/d\ln a\,)
+  \]
+
+---
+
+# Comparison to GR
+
+| Quantity | GR expression | Pushing‑medium expression | Agreement/deviation | Notes |
+|---|---|---|---|---|
+| Light deflection (static) | Shapiro/PPN with γ ≈ 1 | Same T functional with n(ρ_s) yielding γ ≈ 1 | Within solar‑system bounds | Frozen n(ρ_s) reproduces γ |
+| Lense–Thirring (spin) | Frame‑drag ω ≈ 2GJ/(c^2 r^3) | ω_s(r)=2GJ/(c^2 r^3) | Match | Identical form |
+| Moving lens vt/c | Vector potential from mass current | Retarded u_g from J with Fizeau term | Within few percent | Correct sign and scaling |
+| GW propagation | TT, v_g = c, dispersionless | TT, v_g = c from wave equation | Match | k_rad ≈ 1 |
+| Binary damping Ṗ_b | Quadrupole flux | TT channel normalized to G, c | Within few percent | No extra modes |
+| Photon sphere deflection | α ≈ −ā ln(b/b_c − 1)+b̄ | Same critical form from T[n, u_g] | Few‑percent | b_c, ā, b̄ close |
+| Inspiral phasing | 3.5PN phase (SPA) | Same scaling via TT flux + conservative sector | < 0.1 rad over 10⁴ cycles | No retuning |
+| EMRI flux balance | Ė,F_J from BH perturbation | Substrate TT flux, q‑scaling | Within few percent | Resonances finite |
+| Conservation laws | ∇_μ T^{μν}=0 (GR) | Energy identity with S, boundary control | Pass (numerical) | Symmetric‑hyperbolic |
+| Distances D_L, D_A | From GR H(z) | From H(z) with single background | ≤ ~10% to z ≈ 3 | No new knobs |
+| Growth f(z) | ΛCDM: f ≈ Ω_m^γ | Same ODE with effective coupling | Within ~10% | γ_eff ≈ 0.56 |
+
+> Sources: internal validation results across weak field, strong field, radiation, timing, and cosmology‑lite tests using the single frozen calibration backbone.

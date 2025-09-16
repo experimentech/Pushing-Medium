@@ -1,0 +1,52 @@
+\section*{Flow Map Modelling}
+
+\subsection*{Definition}
+A \emph{flow map} is a representation of how points in space are transported over time by a vector field.  
+Formally, given a velocity field $\mathbf{u}(\mathbf{r},t)$, the flow map over a time interval $T$ is the mapping
+
+
+\[
+\Phi_T : \mathbf{x}_0 \mapsto \mathbf{x}(T; \mathbf{x}_0)
+\]
+
+
+where $\mathbf{x}(T; \mathbf{x}_0)$ is the position at time $T$ of a particle that started at $\mathbf{x}_0$ at $t=0$.
+
+\subsection*{Relevance to Physics Modelling}
+In the pushing--medium framework, the vector field $\mathbf{u}_g(\mathbf{r},t)$ represents the ``pushing'' velocity of the medium.  
+Flow maps are used to:
+\begin{itemize}
+    \item Determine where material points, rays, or test particles are transported over a given time.
+    \item Reveal coherent structures such as attracting/repelling regions, transport barriers, and mixing zones.
+    \item Provide a Lagrangian perspective on transport, complementing the Eulerian view of the instantaneous field.
+\end{itemize}
+
+\subsection*{Construction}
+To build a flow map:
+\begin{enumerate}
+    \item \textbf{Define the velocity field} $\mathbf{u}_g(\mathbf{r},t)$, either steady or time--dependent.
+    \item \textbf{Integrate trajectories} from a grid of initial positions $\mathbf{x}_0$ over a fixed time $T$:
+    
+
+\[
+    \mathbf{x}(T; \mathbf{x}_0) = \mathbf{x}_0 + \int_0^T \mathbf{u}_g(\mathbf{x}(t), t) \, dt
+    \]
+
+
+    \item \textbf{Store the mapping} $\Phi_T(\mathbf{x}_0)$ for later analysis.
+    \item \textbf{Analyse the map}:
+    \begin{itemize}
+        \item Compute the Jacobian $D\Phi_T$ to obtain stretching rates.
+        \item Derive Finite--Time Lyapunov Exponents (FTLE) to visualise attracting and repelling structures.
+        \item Compare with static field features (e.g., skeletons) to study structure--transport interplay.
+    \end{itemize}
+\end{enumerate}
+
+\subsection*{Application in the Pushing--Medium Model}
+In the pushing--medium context:
+\begin{itemize}
+    \item Flow maps show how $\mathbf{u}_g$ carries particles or rays through the refractive--index landscape $n(\mathbf{r},t)$.
+    \item Overlaying flow maps with skeletons of $n(\mathbf{r})$ reveals whether static refractive structures act as highways (aligned with flow) or barriers (orthogonal to flow).
+    \item Time--dependent $\mathbf{u}_g$ fields can be engineered to shift, merge, or break skeleton structures, enabling dynamic control of transport (e.g., valves, traps, beam steering).
+\end{itemize}
+

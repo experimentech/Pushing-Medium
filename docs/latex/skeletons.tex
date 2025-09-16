@@ -1,0 +1,45 @@
+\section*{Skeletons in Field Analysis}
+
+\subsection*{Definition}
+In computational physics and image analysis, a \emph{skeleton} is a reduced, one--pixel--wide (or one--voxel--wide) representation of the essential structure of a scalar field. It traces the ``ridge lines'' or ``spines'' that follow maxima, ridges, or other topologically significant features.
+
+\subsection*{Relevance to Physics Modelling}
+In a refractive--index field $n(\mathbf{r})$, skeletons can:
+\begin{itemize}
+    \item Trace maxima, ridges, or filamentary structures where gradients are strong.
+    \item Provide a topology--preserving simplification of the field, retaining connectivity and geometry without the surrounding bulk.
+    \item Serve as a basis for quantifying structure (lengths, branching, curvature) and for seeding flow lines or ray bundles along physically relevant paths.
+\end{itemize}
+
+\subsection*{Computation Methods}
+Common approaches to skeleton extraction include:
+\begin{enumerate}
+    \item \textbf{Morphological thinning} --- iteratively eroding a binary mask until only the medial axis remains.
+    \item \textbf{Medial axis transform} --- identifying points equidistant to at least two boundaries.
+    \item \textbf{Hessian--based ridge detection} --- computing the Hessian matrix
+    
+
+\[
+    H_{ij} = \frac{\partial^2 n}{\partial x_i \partial x_j}
+    \]
+
+
+    and finding eigenvectors/eigenvalues that indicate ridge--like curvature, then tracing along them.
+    \item \textbf{Topological persistence} --- using contour trees or Morse--Smale complexes to extract stable ridges.
+\end{enumerate}
+
+For refractive--index fields, the Hessian--based method is often ideal:
+\begin{itemize}
+    \item Compute $\nabla n$ and $H_{ij}$.
+    \item Identify points where the gradient is orthogonal to a principal curvature direction and curvature is negative along that direction.
+    \item Trace these points to form continuous skeleton lines.
+\end{itemize}
+
+\subsection*{Application in the Pushing--Medium Model}
+In the pushing--medium framework:
+\begin{itemize}
+    \item Skeletons reveal the ``bones'' of the refractive--index landscape, highlighting coherent structures such as beam paths, valve edges, or trap boundaries.
+    \item They can be overlaid with flow maps of $\mathbf{u}_g(\mathbf{r},t)$ to study the interplay between static refractive structures and dynamic transport.
+    \item This combination helps identify whether skeleton ridges act as highways (aligned with flow) or barriers (orthogonal to flow), and how dynamic changes in $\mathbf{u}_g$ shift, merge, or break these structures.
+\end{itemize}
+

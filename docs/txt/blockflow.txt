@@ -1,0 +1,13 @@
+[Bodies: r_i(t), M_i] --positions,masses--> [n(r), grad n(r)]
+         |                                      |  n(r) = 1 + sum_i [ 2*G*M_i / (c^2 * |r - r_i|) ]
+         |                                      |  grad n(r) = - sum_i [ 2*G*M_i / (c^2 * |r - r_i|^3) * (r - r_i) ]
+         |                                      v
+         +--> [u_g(r)] -----------------------> [Fermat ray step: k, r]
+              u_g(r) = sum_i [ M_i * (z_hat x (r - r_i)) / (|r - r_i|^2 + eps^2) ]
+                                                   |
+                                                   |  k_new = k + (ds / n(r)) * (grad n - (dot(k, grad n))*k)
+                                                   |  k_new = k_new / norm(k_new)
+                                                   |  r_new = r + k_new * ds
+                                                   v
+                                             [Rays: r, k] --loop-->
+

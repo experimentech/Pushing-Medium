@@ -1,0 +1,8 @@
+[Bodies: r_i(t), M_i] --update--> [n(r), grad n(r)]
+         |                             |
+         |                             v
+         +--> [u_g(r)] --------------> [Fermat ray step: k, r]
+                                        ^
+                                        |
+                                   [Rays: r, k]
+

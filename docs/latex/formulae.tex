@@ -1,0 +1,12 @@
+% Scalar refractive index field from N point masses
+n(\mathbf{r}) = 1 + \sum_{i=1}^N \frac{2 G M_i}{c^2 \, |\mathbf{r} - \mathbf{r}_i|}
+
+% Gradient of the index field
+\nabla n(\mathbf{r}) = - \sum_{i=1}^N \frac{2 G M_i}{c^2 \, |\mathbf{r} - \mathbf{r}_i|^3} \, (\mathbf{r} - \mathbf{r}_i)
+
+% Simple 2D frame-drag analogue (swirl flow)
+\mathbf{u}_g(\mathbf{r}) = \sum_{i=1}^N \frac{M_i \, \hat{\mathbf{z}} \times (\mathbf{r} - \mathbf{r}_i)}{|\mathbf{r} - \mathbf{r}_i|^2 + \varepsilon^2}
+
+% Example TT wave perturbation to n
+\delta n_{\mathrm{TT}}(\mathbf{r}, t) = A \, \sin(\mathbf{k} \cdot \mathbf{r} - \omega t + \phi_0)
+

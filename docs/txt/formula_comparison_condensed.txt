@@ -1,0 +1,24 @@
+Here’s the **condensed formula‑mapping table** — stripped to just the paired equations and a one‑line mapping. It’s designed as a quick‑glance handout or appendix slide for a technical audience, complementing the diagram we discussed.
+
+---
+
+## **GR ↔ Pushing‑Medium Formula Map**
+
+| GR Concept / Equation | Pushing‑Medium Analogue | Mapping |
+|---|---|---|
+| **Metric**: \(ds^2 = g_{\mu\nu} dx^\mu dx^\nu\) | Optical medium: \(n = n(\rho_s)\), retarded flow \(\mathbf{u}_g\) | Metric geometry ↔ index + flow fields |
+| **Geodesics**: \(\frac{d^2x^\mu}{d\lambda^2} + \Gamma^\mu_{\alpha\beta} \frac{dx^\alpha}{d\lambda} \frac{dx^\beta}{d\lambda} = 0\) | Fermat functional: \(T = \int n\,ds - \frac{1}{c}\int (n^2-1)(\mathbf{u}_g\cdot\hat{\mathbf{k}})\,ds\) | Geodesic motion ↔ stationary‑time optical paths |
+| **Christoffels**: \(\Gamma^\mu_{\alpha\beta} = \frac12 g^{\mu\nu}(\partial_\alpha g_{\nu\beta} + \partial_\beta g_{\nu\alpha} - \partial_\nu g_{\alpha\beta})\) | Deflection drivers: \(\nabla n,\ \nabla \mathbf{u}_g\) | Connection coefficients ↔ medium gradients |
+| **Einstein eq.**: \(G_{\mu\nu} = 8\pi T_{\mu\nu}\) | Symmetric‑hyperbolic PDEs: \(A^0\partial_t\mathbf{U} + A^k\partial_k\mathbf{U} = \mathbf{R}(\mathbf{U})\) | Curvature–matter relation ↔ substrate dynamics |
+| **GW propagation**: \(\Box h_{ij}^{\mathrm{TT}} = 0\), \(v_g=c\) | \(\Box h_{ij}^{\mathrm{TT}} = \mathcal{S}_{ij}^{\mathrm{TT}}\), \(v_g=c\) | TT wave sector identical in dispersion/polarization |
+| **Frame‑drag (spin)**: \(\boldsymbol{\omega} = \frac{2G\mathbf{J}}{c^2 r^3}\) | \(\boldsymbol{\omega}_s(r) = \frac{2G\mathbf{J}}{c^2 r^3}\) | Identical form |
+| **Moving‑lens gravito‑magnetism**: Vector potential \(V_i\) from mass current | Retarded \(\mathbf{u}_g\) from \(\mathbf{J}=\rho\,\mathbf{v}\) in Fermat functional | Same vt/c term after shared normalization |
+| **Conservation**: \(\nabla_\mu T^{\mu\nu} = 0\) | Energy identity: \(\partial_t\mathcal{E} + \partial_k\mathcal{F}^k = \mathbf{U}^\top S\,\mathbf{R}(\mathbf{U})\) | Stress–energy conservation ↔ flux balance |
+| **Cosmological distances**: \(D_C(z) = \int_0^z \frac{c\,dz'}{H(z')}\), \(D_L=(1+z)D_C\) | Same integrals with \(H(z)\) from expanding‑substrate ansatz | Identical form, different origin of \(H(z)\) |
+| **Growth of structure**: \(\delta'' + (2+H'/H)\delta' - \frac{3}{2}\Omega_m\delta = 0\) | Same ODE with effective \(\Omega_m(a)\) from substrate push‑law | Same structure, altered source term |
+
+---
+
+This table is compact enough to fit on a single slide or handout, but still makes the one‑to‑one correspondences obvious.  
+
+If you like, I can also prepare a **colour‑coded version** where exact matches are in green, structural matches with different mechanisms are in amber, and novel terms are in blue — that makes it even easier for an audience to scan and see “what’s the same” vs “what’s new.” Would you like me to do that next?
