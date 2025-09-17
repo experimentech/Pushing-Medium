@@ -582,6 +582,48 @@ Limitations of current baseline:
 - No explicit baryonic contribution included in halo fit (intentionally harsh test for medium inner slope fidelity).
 - Simple random + refinement search may miss narrow degeneracy valleys (future: log-prior sampling / MCMC optional module).
 
+### 11.11 Joint Disk + Halo Fitting
+For balanced comparison against the medium model, we introduce a joint fitter combining an exponential baryonic disk with a dark halo (NFW or Burkert):
+
+Model composition:
+$$v_{\text{tot}}^2(r) = v_{\text{disk}}^2(r) + v_{\text{halo}}^2(r)$$
+with the same exponential disk mass profile used by the medium comparison and an analytic halo velocity profile.
+
+API:
+```python
+from galaxy_dynamics import fit_disk_halo_rotation_curve
+
+res = fit_disk_halo_rotation_curve(
+    radii_m, v_obs_ms, v_err_ms,
+    halo_type='nfw',
+    disk_bounds={'M_d': (1e40, 2e41), 'R_d': (2e19, 1.2e20)},
+    halo_bounds={'rho_s': (1e-23, 1e-20), 'r_s': (2e19, 2e20)},
+    n_random=250, n_refine=80
+)
+print(res['chi2'], res['disk'], res['halo'])
+```
+
+Returned keys:
+- `disk`: best-fit `DiskParams`
+- `halo`: best-fit halo parameters (`NFWParams` or `BurkertParams`)
+- `model`: list of fitted total velocities (m/s)
+- `chi2`: minimized objective value
+- `halo_type`: tag indicating which halo profile was used
+
+Usage recommendations:
+- Start with broad, physically plausible bounds (avoid artificially constraining degeneracies between $M_d$ and $\rho_s$ or $r_s$).
+- Increase `n_random` for galaxies with extended flat regions (degeneracy widened by outer plateau).
+- Compare AIC/BIC proxies later to penalize additional parameters relative to the medium model.
+
+Interpreting results:
+- If joint disk+halo significantly outperforms medium (large systematic reduction in frac_rms and outer_delta neutral), the medium needs refinement or extra constraints.
+- If medium matches or beats joint fits across many galaxies without invoking unseen mass, it strengthens the hypothesis of a substrate-induced modification.
+
+Future extensions:
+- Add optional priors linking disk scale $R_d$ and halo scale $r_s$ (empirical concentration-like relations).
+- Provide simultaneous multi-model evaluation returning a ranked list per galaxy.
+- Incorporate anisotropy or flaring corrections for the disk as additional (optional) parameters.
+
 
 
 

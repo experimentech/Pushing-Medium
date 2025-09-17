@@ -20,7 +20,7 @@ from .fitting import fit_rotation_curve, chi_square
 from .halos import (
     NFWParams, BurkertParams, mass_enclosed_nfw, mass_enclosed_burkert,
     circular_velocity_nfw, circular_velocity_burkert, halo_velocity_profile,
-    fit_halo_rotation_curve
+    fit_halo_rotation_curve, fit_disk_halo_rotation_curve
 )
 
 __all__ = [
@@ -30,5 +30,5 @@ __all__ = [
     'fit_rotation_curve', 'chi_square',
     'NFWParams', 'BurkertParams', 'mass_enclosed_nfw', 'mass_enclosed_burkert',
     'circular_velocity_nfw', 'circular_velocity_burkert', 'halo_velocity_profile',
-    'fit_halo_rotation_curve'
+    'fit_halo_rotation_curve', 'fit_disk_halo_rotation_curve'
 ]
