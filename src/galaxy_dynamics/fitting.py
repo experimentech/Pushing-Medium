@@ -127,5 +127,63 @@ def fit_rotation_curve(
     return best
 
 __all__ = [
-    'fit_rotation_curve', 'chi_square'
+    'fit_rotation_curve', 'chi_square', 'compute_residual_metrics', 'fit_population'
 ]
+
+
+def compute_residual_metrics(rc: RotationCurve, model: list[float]) -> Dict[str, float]:
+    """Compute diagnostic residual metrics.
+
+    Metrics:
+      rms: sqrt(mean( (v_obs - v_mod)^2 ))
+      frac_rms: rms / mean(v_obs)
+      outer_delta: (v_obs_last - v_mod_last) / max(v_obs_last, 1)
+      inner_slope_ratio: ratio of (v at second radius)/(v at first) for obs vs model
+    """
+    if len(rc.v_obs_ms) != len(model) or not rc.v_obs_ms:
+        return { 'rms': math.nan, 'frac_rms': math.nan, 'outer_delta': math.nan, 'inner_slope_ratio': math.nan }
+    diffs = []
+    for vo, vm in zip(rc.v_obs_ms, model):
+        if math.isfinite(vo) and math.isfinite(vm):
+            diffs.append(vo - vm)
+    if not diffs:
+        return { 'rms': math.nan, 'frac_rms': math.nan, 'outer_delta': math.nan, 'inner_slope_ratio': math.nan }
+    rms = math.sqrt(sum(d*d for d in diffs)/len(diffs))
+    mean_obs = sum(rc.v_obs_ms)/len(rc.v_obs_ms)
+    outer_delta = math.nan
+    if math.isfinite(rc.v_obs_ms[-1]) and math.isfinite(model[-1]):
+        outer_delta = (rc.v_obs_ms[-1] - model[-1]) / max(rc.v_obs_ms[-1], 1.0)
+    inner_slope_ratio = math.nan
+    if len(rc.v_obs_ms) >= 2 and model[0] > 0 and model[1] > 0 and rc.v_obs_ms[0] > 0 and rc.v_obs_ms[1] > 0:
+        obs_ratio = rc.v_obs_ms[1] / rc.v_obs_ms[0]
+        mod_ratio = model[1] / model[0]
+        if mod_ratio != 0:
+            inner_slope_ratio = obs_ratio / mod_ratio
+    return {
+        'rms': rms,
+        'frac_rms': rms / mean_obs if mean_obs > 0 else math.nan,
+        'outer_delta': outer_delta,
+        'inner_slope_ratio': inner_slope_ratio
+    }
+
+
+def fit_population(
+    curves: Dict[str, RotationCurve],
+    disk_bounds: Dict[str, Tuple[float, float]],
+    medium_bounds: Dict[str, Tuple[float, float]],
+    n_random: int = 150,
+    n_refine: int = 40,
+    rng: Optional[random.Random] = None,
+) -> Dict[str, Dict[str, Any]]:
+    """Fit a population of rotation curves returning per-galaxy summaries.
+
+    Returns a dict mapping galaxy name to summary with keys:
+      disk, medium, chi2, model, radii_m, metrics{rms, frac_rms, outer_delta, inner_slope_ratio}
+    """
+    summaries: Dict[str, Dict[str, Any]] = {}
+    for name, rc in curves.items():
+        result = fit_rotation_curve(rc, disk_bounds, medium_bounds, n_random=n_random, n_refine=n_refine, rng=rng)
+        metrics = compute_residual_metrics(rc, result['model'])
+        result['metrics'] = metrics
+        summaries[name] = result
+    return summaries

@@ -506,6 +506,42 @@ Planned improvements:
 - Inclusion of halo comparison baselines (e.g., NFW, Burkert) for relative residual analysis.
 - Batch fitting helper returning population statistics and residual distributions.
 
+### 11.9 Residual Diagnostics & Population Fitting
+To evaluate systematic performance across many galaxies, the fitting module supplies:
+
+1. `compute_residual_metrics(rc, model)` — produces a dictionary of scalar diagnostics:
+   - `rms`: Root-mean-square absolute velocity residual.
+   - `frac_rms`: RMS normalized by mean observed velocity (scale-invariant comparison).
+   - `outer_delta`: Relative residual at the outermost sampled radius; probes asymptotic matching.
+   - `inner_slope_ratio`: Ratio of observed inner rise (v2/v1) to model inner rise; highlights core mismatch.
+
+2. `fit_population(curves, disk_bounds, medium_bounds, n_random=..., n_refine=...)` — iterates `fit_rotation_curve` over a dictionary `{name: RotationCurve}` returning per-galaxy summaries augmented with `metrics`.
+
+Example:
+```python
+from galaxy_dynamics import load_sparc_real
+from galaxy_dynamics.fitting import fit_population
+
+curves = load_sparc_real('sparc_catalog.csv', return_dict=True)
+disk_bounds = {'M_d': (5e39, 5e41), 'R_d': (1e19, 2e20)}
+medium_bounds = {'v_inf': (5e4, 3.5e5), 'r_s': (1e19, 2e20), 'r_c': (5e18, 8e19), 'm': (0.8, 4.0)}
+summaries = fit_population(curves, disk_bounds, medium_bounds, n_random=120, n_refine=40)
+for name, s in summaries.items():
+    print(name, s['chi2'], s['metrics']['frac_rms'], s['metrics']['outer_delta'])
+```
+
+Interpretation guidelines:
+- High `frac_rms` indicates global mismatch; inspect residual distribution vs radius.
+- Large positive `outer_delta` (> +0.1) means model under-predicts outer plateau; negative indicates over-prediction.
+- `inner_slope_ratio` > 1: observed rises faster than model (need steeper inner mass or medium taper); < 1: model too steep.
+- Combine metrics into a selection filter (e.g., discard fits with frac_rms > 0.2 before population statistics).
+
+Planned population extensions:
+- Export tabular summaries (CSV / JSON) with percentile aggregates.
+- Bootstrapped uncertainty estimates via re-sampling radii.
+- Residual shape classification (e.g., concave vs convex error trend) for clustering analyses.
+
+
 
 ## 11. Skeletons & flow‑map modelling
 
