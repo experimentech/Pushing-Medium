@@ -17,10 +17,18 @@ from .rotation import (
 )
 from .data import RotationCurve, load_sparc_mock, load_sparc_real
 from .fitting import fit_rotation_curve, chi_square
+from .halos import (
+    NFWParams, BurkertParams, mass_enclosed_nfw, mass_enclosed_burkert,
+    circular_velocity_nfw, circular_velocity_burkert, halo_velocity_profile,
+    fit_halo_rotation_curve
+)
 
 __all__ = [
     'DiskParams', 'MediumParams', 'mass_enclosed_exponential', 'accel_baryonic',
     'delta_n_medium', 'accel_medium', 'circular_velocity', 'rotation_curve',
     'deflection_angle_axisymmetric', 'RotationCurve', 'load_sparc_mock', 'load_sparc_real',
-    'fit_rotation_curve', 'chi_square'
+    'fit_rotation_curve', 'chi_square',
+    'NFWParams', 'BurkertParams', 'mass_enclosed_nfw', 'mass_enclosed_burkert',
+    'circular_velocity_nfw', 'circular_velocity_burkert', 'halo_velocity_profile',
+    'fit_halo_rotation_curve'
 ]

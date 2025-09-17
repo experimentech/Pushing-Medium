@@ -541,6 +541,48 @@ Planned population extensions:
 - Bootstrapped uncertainty estimates via re-sampling radii.
 - Residual shape classification (e.g., concave vs convex error trend) for clustering analyses.
 
+### 11.10 Halo Baselines & Comparative Performance
+To assess whether the pushing‑medium phenomenology can obviate dark matter halos, we include standard halo benchmarks:
+
+Implemented profiles:
+- **NFW**: $(\rho_s, r_s)$ with mass $M(<r)=4\pi\rho_s r_s^3[\ln(1+x)-x/(1+x)]$, $x=r/r_s$.
+- **Burkert** (cored): $(\rho_0, r_c)$ with $M(<r)=2\pi\rho_0 r_c^3[\tfrac{1}{2}\ln(1+x^2)+\ln(1+x)-\arctan x]$.
+
+API summary:
+```python
+from galaxy_dynamics import (
+    NFWParams, BurkertParams, fit_halo_rotation_curve,
+    halo_velocity_profile, fit_rotation_curve
+)
+
+# Fit halo-only (no baryons) baseline
+result_nfw = fit_halo_rotation_curve(radii, v_obs, v_err, 'nfw', bounds={'rho_s':(...), 'r_s':(...)})
+
+# Medium + disk already via fit_rotation_curve(...)
+```
+
+Comparison methodology (initial minimal set):
+1. Fit medium+disk model (phenomenological) and halo-only models separately.
+2. Record per-galaxy metrics: $\chi^2$, fractional RMS, outer_delta.
+3. Construct summary statistics: median frac_rms (medium) vs (NFW) vs (Burkert).
+4. Count galaxies where medium improves $\chi^2$ by > threshold (e.g. $\Delta\chi^2 > 5$) relative to best halo.
+5. Evaluate outer_delta distributions: systematic positive bias would indicate medium underestimates outer support compared to halos.
+
+Interpretation guidelines:
+- If medium median frac_rms ≲ halo median within statistical scatter and no strong outer bias, the phenomenological medium is competitive absent an explicit halo mass component.
+- Large scatter or need for extreme parameter values (e.g. $m$ or $r_s$ uncorrelated with disk $R_d$) weakens explanatory power.
+- Future: incorporate disk + halo fits to ensure fair comparison (currently halo-only exaggerates medium advantage if baryons significantly shape inner curve).
+
+Planned extensions:
+- Dual-component fits (baryons + NFW) for a fully balanced likelihood comparison.
+- Information criteria (AIC, BIC) to penalize extra degrees of freedom in medium vs halo parameterizations.
+- Scaling relation diagnostics (Baryonic Tully–Fisher, Radial Acceleration Relation) extracted from fitted parameter sets.
+
+Limitations of current baseline:
+- No explicit baryonic contribution included in halo fit (intentionally harsh test for medium inner slope fidelity).
+- Simple random + refinement search may miss narrow degeneracy valleys (future: log-prior sampling / MCMC optional module).
+
+
 
 
 ## 11. Skeletons & flow‑map modelling
