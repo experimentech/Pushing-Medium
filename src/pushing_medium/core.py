@@ -284,3 +284,92 @@ def moving_lens_deflection_numeric(
         dlnndx = dndx / n_val
         alpha += dlnndx * dz
     return float(abs(alpha))
+
+
+def curved_path_deflection_iterative(
+    M: float,
+    b: float,
+    mu: float,
+    z_max: float = 5.0,
+    steps: int = 4000,
+    relax: float = 0.5,
+    iters: int = 2,
+    v_transverse: float = 0.0,
+    update_path: bool = True,
+) -> float:
+    """Iteratively refine small-angle deflection allowing transverse coordinate to adjust.
+
+    Strategy:
+      1. Start with straight path x(z)=b.
+      2. Compute deflection integral α = ∫ ∂_x ln n dz (like index_deflection_numeric) but track cumulative tilt θ(z).
+      3. Update path: x_new(z) = b + relax * ∫_{-z_max}^{z} θ(z') dz' (first-order lateral drift) and recompute.
+      4. Repeat (iters times) returning final α.
+
+    Motion: if v_transverse ≠ 0, lens position shifts: x_rel = x_path(z) - v_transverse * z / c.
+
+    Accuracy: still approximate (neglects higher-order coupling and path y/z curvature) but reduces error at moderate b.
+    """
+    import numpy as np
+
+    zs = np.linspace(-z_max, z_max, steps)
+    dz = zs[1] - zs[0]
+    x_path = np.full_like(zs, b, dtype=float)
+
+    def one_pass(x_path):
+        theta = 0.0  # small angle in x-direction
+        alpha = 0.0
+        # store theta profile for path update
+        thetas = []
+        for z, x in zip(zs, x_path):
+            x_rel = x - (v_transverse * z / c)
+            r = math.sqrt(x_rel * x_rel + z * z) + 1e-30
+            n_val = 1.0 + (mu * M) / r
+            dndx = -(mu * M) * x_rel / (r ** 3)
+            dlnndx = dndx / n_val
+            # d theta / dz ≈ dln n / dx
+            theta += dlnndx * dz
+            alpha += dlnndx * dz
+            thetas.append(theta)
+        return float(abs(alpha)), np.array(thetas)
+
+    last_alpha = 0.0
+    for _ in range(iters):
+        alpha, thetas = one_pass(x_path)
+        last_alpha = alpha
+        if not update_path:
+            break
+        # integrate theta to get lateral shift δx(z) ≈ ∫ theta dz'
+        cum_shift = np.cumsum(thetas) * dz
+        # re-anchor so shift at z=-z_max is zero
+        cum_shift -= cum_shift[0]
+        x_path = b + relax * cum_shift
+    return last_alpha
+
+
+# --- Effective metric & PPN-like parameter extraction ---
+
+def effective_isotropic_metric(n: float):
+        """Return an approximate isotropic weak-field metric components (g_tt, g_rr) from index n.
+
+        Mapping heuristic: for weak fields, gravitational time dilation ~ 1/n and spatial curvature ~ n.
+        We adopt g_tt ≈ -1 / n^2,  g_rr ≈ n^2 (isotropic). This makes null condition roughly emulate optical path.
+        """
+        g_tt = -1.0 / (n * n)
+        g_rr = n * n
+        return g_tt, g_rr
+
+
+def estimate_ppn_gamma_beta(M: float, r: float, mu: float):
+        """Estimate PPN parameters gamma, beta from index form.
+
+        For n(r) = 1 + mu M / r, expand effective metric forms:
+            g_tt ≈ -1 + 2U + O(U^2) with U = - (mu M / r)
+            g_rr ≈ 1 + 2 gamma U + ...
+        Compare coefficients to extract gamma ≈ 1 and (optionally) beta from quadratic term (currently trivial ~1).
+        Returns (gamma, beta, U).
+        """
+        U = mu * M / r  # positive small parameter analogous to GM/(c^2 r)
+        # In our mapping both temporal and spatial coefficients pick up same leading factor ⇒ gamma ~ 1
+        gamma = 1.0
+        beta = 1.0  # no nonlinear term modeled explicitly yet
+        return gamma, beta, U

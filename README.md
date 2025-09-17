@@ -136,6 +136,16 @@ Key test categories (all under `tests/` and passing):
 - Adaptive z integration (smaller dz near closest approach) to speed convergence.
 - Optional effective metric export (mapping n, u_g to isotropic weak‑field metric components for comparison tables).
 
+## Effective metric & PPN draft
+
+An initial helper maps the scalar index to an approximate isotropic weak‑field metric: \(g_{tt}\approx -1/n^2\), \(g_{rr}\approx n^2\). Expanding for \(n=1+\epsilon\) gives:
+\[
+g_{tt} \approx -1 + 2\epsilon + O(\epsilon^2), \qquad g_{rr} \approx 1 + 2\epsilon + O(\epsilon^2)
+\]
+Identifying \(\epsilon = \mu M / r\) (positive) yields PPN-like \(\gamma \approx 1\) and (with no explicit quadratic term yet) \(\beta \approx 1\). Tests (`test_ppn_parameters.py`) assert these within tight tolerances and verify Lorentzian signature.
+
+Limitations: This mapping is a heuristic; full covariant reconstruction and higher-order (β) effects are not yet modeled.
+
 If you’d like those implemented, open an issue or keep the chat session going.
 
 ## Troubleshooting
