@@ -1,4 +1,4 @@
-# The Pushing-Medium Model: A Comprehensive Documentation
+# The Pushing-Medium Model: Technical Overview
 
 ## Abstract
 
@@ -43,7 +43,7 @@ $$
 n(\mathbf{r}) = 1 + \frac{2G}{c^2} \int \frac{\rho(\mathbf{r}')}{|\mathbf{r} - \mathbf{r}'|} \, d^3 r'
 $$
 
-**Physical Interpretation:** Masses increase the local refractive index, creating regions where light slows down, analogous to gravitational time dilation.
+**Interpretation:** Masses raise the local refractive index; higher index corresponds to effective time dilation / slower coordinate light speed.
 
 ### 2.2 Gradient of Refractive Index
 
@@ -51,7 +51,7 @@ $$
 \nabla n(\mathbf{r}) = -\sum_i \frac{2GM_i}{c^2 |\mathbf{r} - \mathbf{r}_i|^3} (\mathbf{r} - \mathbf{r}_i)
 $$
 
-**Physical Interpretation:** The gradient determines the direction and magnitude of gravitational effects, pointing toward massive objects.
+**Interpretation:** The gradient direction specifies attractive response; magnitude sets bending or acceleration strength.
 
 ### 2.3 Flow Field (Frame-Dragging Analogue)
 
@@ -65,7 +65,7 @@ $$
 \omega_s(r) = \frac{2GJ}{c^2 r^3}
 $$
 
-**Physical Interpretation:** Models frame-dragging effects similar to the Lense-Thirring effect in General Relativity, where rotating masses drag the medium.
+**Interpretation:** Mimics Lense–Thirring‑like frame influence by advecting rays and massive trajectories.
 
 ### 2.4 Gravitational Wave Analogues
 
@@ -79,7 +79,7 @@ $$
 \frac{\partial^2 h}{\partial t^2} - c^2 \frac{\partial^2 h}{\partial x^2} = 0
 $$
 
-**Physical Interpretation:** Gravitational waves are modeled as explicit oscillations in the medium's refractive index, propagating at the speed of light.
+**Interpretation:** TT‑style perturbations propagate at speed $c$; phenomenological, not derived from covariant field equations.
 
 ### 2.5 Total Field Configuration
 
@@ -108,7 +108,11 @@ $$
 T = \int n\,ds - \frac{1}{c} \int (n^2 - 1)(\mathbf{u}_g \cdot \hat{\mathbf{k}})\,ds
 $$
 
-**Physical Interpretation:** Light follows paths of stationary travel time in the medium, naturally producing gravitational lensing effects.
+**Interpretation:** Rays extremize optical travel time producing lensing and time‑delay analogues.
+
+### 3.1.1 Current implementation status
+- Static index: `fermat_deflection_static_index` integrates $\partial_x \ln n$ along a straight reference path and numerically reproduces $4GM/(c^2 b)$.
+- Moving lens: present code exposes a heuristic $k_{\mathrm{Fizeau}}$ (near unity) and a straight‑path translational correction; higher fidelity path‑corrected advection is planned.
 
 ### 3.2 Massive Particle Motion
 
@@ -127,7 +131,7 @@ $$
 \frac{d^2 \mathbf{r}}{dt^2} = \mathbf{a}_{\mathrm{grav}} + \mathbf{a}_{\mathrm{med}} + \text{(flow coupling)}
 $$
 
-**Physical Interpretation:** Massive particles experience both traditional Newtonian gravity and additional accelerations due to medium gradients.
+**Interpretation:** Motion combines Newtonian inverse‑square attraction with an additional gradient‑index term.
 
 ---
 
@@ -182,7 +186,7 @@ def gaussian_index(eps, sigma, center):
 
 ### 5.1 Light Deflection and Lensing
 
-The model naturally reproduces:
+The framework reproduces:
 - **Gravitational Lensing**: Rays bend toward regions of higher refractive index
 - **Shapiro Delay**: Light travels slower through regions of higher index
 - **Multiple Images**: Complex lens configurations produce multiple ray paths
@@ -231,7 +235,7 @@ $$
 | **Causality** | Light cones from metric | Characteristic speeds from medium properties |
 | **Strong Field Regime** | Exact nonlinear solutions available | Validity unclear; requires empirical validation |
 
-### 6.2 Empirical Predictions
+### 6.2 Empirical Regime (current scope)
 
 **Weak Field Agreement:**
 - Recovers Newton's law in appropriate limits
@@ -261,7 +265,7 @@ $$
 
 ## 7. Advantages and Limitations
 
-### 7.1 Advantages
+### 7.1 Advantages (summary)
 
 **Conceptual:**
 - Intuitive optical analogies
@@ -281,7 +285,7 @@ $$
 - Straightforward experimental analogues
 - Educational value for teaching
 
-### 7.2 Limitations
+### 7.2 Limitations (summary)
 
 **Theoretical:**
 - Lack of manifest covariance
@@ -339,19 +343,15 @@ $$
 
 ---
 
-## 9. Conclusions
+## 9. Summary
 
-The Pushing-Medium model represents a compelling alternative approach to gravitational physics that trades the mathematical elegance of General Relativity's geometric formulation for computational simplicity and intuitive understanding. While it successfully reproduces many observed gravitational phenomena in weak-field regimes, its ultimate validity requires extensive empirical testing in strong-field and relativistic environments.
-
-The model's primary strength lies in its pedagogical value and computational efficiency, making it an excellent tool for education, exploration, and rapid prototyping of gravitational scenarios. Its modular structure allows for systematic investigation of individual effects and their combinations, providing insights that complement traditional GR approaches.
-
-Future development should focus on theoretical refinement toward manifest covariance, empirical validation in increasingly extreme regimes, and computational optimization for large-scale applications. The model serves as both a practical computational tool and a conceptual bridge between classical and relativistic gravitational physics.
+Current implementation: weak‑field lensing/time‑delay/ perihelion / frame‑drag / GW power analogues validated numerically against classical GR forms. Framework is phenomenological; strong‑field and fully covariant behavior remain open. Emphasis is computational transparency and modular extensibility.
 
 ---
 
 ## 10. Unexplored Predictions & Experimental Tests
 
-This section lists concrete phenomena and observations the pushing‑medium picture highlights or makes more natural to investigate. Each item includes why the effect is exposed by the medium picture, what a plausible observational/experimental signature would be, and a short suggested test or small project.
+Outlined below are candidate phenomena for future discrimination; each includes rationale, indicative signature, and a schematic test.
 
 1) Medium microphysics and constitutive relations
 - Why it matters: unlike GR, the pushing‑medium requires a substrate model (compressible fluid, elastic field, condensate) and a constitutive relation linking substrate state to $n(\rho_s,P_s)$. Different microphysics predict measurable differences.
@@ -465,25 +465,20 @@ The repository already contains two complementary implementations:
 - Manifold tracing stalls (very small |v|): reduce `ds`, or stop and treat as terminus (manifold reached another equilibrium or an asymptotic region).
 - Spirals / complex eigenvalues: manifold tracing along real eigenvectors is not applicable — treat as local spirals and plot phase portraits instead.
 
-### 11.7 Suggested documentation additions and demos
-
-- Add an example snippet showing a minimal `VectorFlow` usage, stagnation finding, classification, manifold tracing, and plotting overlay. (I can add a runnable demo script `Physics/demos/run_skeleton_demo.py` if you want.)
-- Add a short guide describing how to choose `eps2`, `tol`, `ds`, and `rmax` for common unit choices (astronomical unit scaled, Earth–moon scale, dimensionless).
-
-### 11.8 Next steps (picked by the author)
-
-- If you want documentation only: keep this subsection and I will stop here. If you prefer a runnable demo as well, tell me and I will create `Physics/demos/run_skeleton_demo.py` that produces a PNG showing stagnations and manifolds for a two‑body configuration.
+### 11.7 Supplementary implementation notes (potential additions)
+- Example `VectorFlow` usage snippet (classification + manifolds).
+- Guidance on parameter selection (`eps2`, `tol`, `ds`, `rmax`).
 
 - Why it matters: a substrate implies modified vacuum structure which can alter semiclassical predictions (Hawking radiation, vacuum polarization).
 - Signature: modified particle emission spectra near compact objects; decoherence signatures.
 - Test: model simple quantum fields on a dispersive medium background to estimate deviations from standard semiclassical predictions.
 
-Short prioritized projects (low‑effort, high‑value)
+Short prioritized project concepts
 - GW dispersion demo: implement a toy 1D wave propagation code with tunable dispersion to generate templates and bounds (useful and fast).
 - Effective metric mapping: derive conditions under which index+flow map to an effective metric and parameterize deviations (PPN‑style).
 - Horizon echo simulation: ray tracing on a model substrate that stiffens near a core to look for echoes in time series.
 
-Observational cautions and edge cases
+Observational constraints and cautions
 - Many constraints (GW speed, Lorentz tests, solar‑system PPN) are already tight; pushing‑medium parameter space must be chosen to respect these. Some signatures may be degenerate with astrophysical noise.
 - Care is required to avoid ad‑hoc tuning: focus on physically motivated constitutive relations and explore falsifiable predictions.
 
@@ -676,7 +671,7 @@ The pushing‑medium framework suggests several additional phenomena that are na
 - Why: metastable substrate modes could be triggered by small seeds to emit large energy bursts.
 - Quick test: bistable PDE with localized trigger and measurement of emitted wave energy after nucleation.
 
-These phenomena offer fertile ground for small, focused projects. If you want, I can add one‑line descriptions of expected scalings (e.g., localization length vs disorder strength) or implement a chosen demo next.
+These topics can be expanded with quantitative scaling relations in future revisions.
 
 
 
