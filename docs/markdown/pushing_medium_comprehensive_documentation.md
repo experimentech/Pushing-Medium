@@ -400,6 +400,79 @@ Outlined below are candidate phenomena for future discrimination; each includes 
 
 10) Quantum field coupling and semiclassical effects
 
+---
+
+## 11. Galaxy Rotation Curve Data Integration (SPARC)
+
+### 11.1 Motivation
+Testing the Pushing-Medium model against observed galaxy rotation curves requires a standardized ingestion path for high-quality catalogs. The SPARC (Spitzer Photometry & Accurate Rotation Curves) dataset provides homogeneous photometry and rotation measurements, decomposed into baryonic components (stellar disk, bulge, gas) with geometric metadata (distance, inclination, axis ratio). This repository now includes loaders for both a lightweight mock format (for rapid development) and a more feature-complete real-style format.
+
+### 11.2 Data Structures
+Rotation curves are represented by the `RotationCurve` dataclass:
+- `radii_m`: galactocentric radii (meters)
+- `v_obs_ms`: observed circular velocity (m/s)
+- `v_err_ms`: observational uncertainty (m/s, NaN if absent)
+- `sigma_star`, `sigma_gas`: surface density proxies (unit-preserving placeholders)
+- `components`: optional dict of modeled component velocities (`stars`, `gas`, `bulge`, `bar`) each in m/s
+- `distance_mpc`, `inclination_deg`, `axis_ratio`: optional geometric metadata
+
+### 11.3 Loaders
+1. Mock loader (development & tests):
+    `from galaxy_dynamics import load_sparc_mock`
+    Expected minimal columns: `Name,R_kpc,V_obs_kms,...` (small synthetic CSVs).
+
+2. Real-style loader (component & metadata aware):
+    `from galaxy_dynamics.data import load_sparc_real`
+    Flexible, case-insensitive columns (subset required):
+    - Required: `name, r_kpc, v_obs`
+    - Optional: `err_v, v_stars, v_gas, v_bulge, v_bar, dist_mpc, inc_deg, axis_ratio, sigma_star, sigma_gas`
+
+### 11.4 Usage Examples
+Single galaxy (first in file):
+```python
+from galaxy_dynamics.data import load_sparc_real
+rc = load_sparc_real('sparc_catalog.csv')
+print(rc.name, rc.radii_m[0], rc.v_obs_ms[0])
+```
+
+Select a specific galaxy:
+```python
+rc = load_sparc_real('sparc_catalog.csv', galaxy_name='UGC01234')
+if 'stars' in rc.components:
+     v_stars = rc.components['stars']
+```
+
+Load all galaxies into a dict:
+```python
+curves = load_sparc_real('sparc_catalog.csv', return_dict=True)
+print(len(curves), 'galaxies loaded')
+```
+
+### 11.5 Planned Extensions
+Planned higher-level utilities will include:
+- Baryonic mass model synthesis and conversion of component velocities to enclosed mass profiles
+- Parameter estimation / χ² fitting against Pushing-Medium rotational predictions (`DiskParams`, `MediumParams`)
+- Automated inclination correction and deprojection checks
+- Quality cuts (minimum radial extent, error filtering, outer flatness metrics)
+
+### 11.6 Validation Tests
+The test suite now exercises:
+- Unit conversion correctness (kpc→m, km/s→m/s)
+- Component velocity presence and length matching `radii_m`
+- Galaxy selection versus dictionary return modes
+- Metadata propagation (distance, inclination, axis ratio)
+
+### 11.7 Workflow Toward Model Confrontation
+1. Load rotation curves (mock or real SPARC style)
+2. (Future) Convert component velocities into baryonic acceleration curves
+3. Generate Pushing-Medium predicted circular velocity via `circular_velocity` using `DiskParams` + `MediumParams`
+4. Fit medium parameters (e.g., asymptotic velocity scale) by minimizing residuals
+5. Aggregate residual diagnostics across sample (RMS, outer slope, inner rise)
+6. Compare against standard dark matter halo fits (prospective baseline)
+
+This staged approach will isolate where the current phenomenological medium succeeds or diverges relative to empirical galaxy dynamics.
+
+
 ## 11. Skeletons & flow‑map modelling
 
 This subsection explains how to extract the qualitative transport skeleton of substrate fields used in the pushing‑medium model. "Skeletons" here means the set of stationary points (equilibria), their linearized classification, and the invariant manifolds (stable/unstable separatrices) and ridge/valley lines that organise transport and lensing.
