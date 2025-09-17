@@ -65,6 +65,27 @@ Calibration (cached at `tests/calibration.json`):
 
 Limitations: small-angle assumption; near-critical (few R_s) behavior approximate; moving-lens path currently straight or first-order corrected only.
 
+## Galaxy Dynamics (Rotation Curves)
+
+Module `galaxy_dynamics.rotation` provides utilities for preliminary disk + medium modified rotation curve modeling:
+
+- Exponential disk mass interior: \(M(<r)=M_d[1-(1+r/R_d)e^{-r/R_d}]\)
+- Baryonic acceleration: \(a_{bar}=G M(<r)/r^2\)
+- Phenomenological medium perturbation: \(\delta n_{PM}= - (v_\infty^2/c^2) \ln(1+r/r_s) S(r)\) with smoothing \(S(r)=[1+(r_c/r)^m]^{-1/m}\)
+- Medium acceleration (small perturbation): \(a_{med}= -c^2\,d\delta n_{PM}/dr\) (sign chosen so outer contribution supports flattening)
+- Circular speed: \(v_c(r)=\sqrt{r(a_{bar}+a_{med})}\)
+
+Example:
+```python
+from galaxy_dynamics.rotation import DiskParams, MediumParams, rotation_curve
+disk = DiskParams(M_d=5e40, R_d=5e19)
+medium = MediumParams(v_inf=2.2e5, r_s=5e19, r_c=1e19, m=2.0)
+radii = [1e19, 5e19, 1e20]
+vc = rotation_curve(radii, disk, medium)
+```
+
+Tests cover mass convergence, acceleration signs, and approximate outer flattening behavior. SPARC ingestion and fitting pipeline are planned next.
+
 ## Test Coverage (pytest)
 
 - GR parity: deflection, Shapiro delay, redshift (potential), perihelion, frame-drag, Einstein radius, GW speed/power, orbit energy.
