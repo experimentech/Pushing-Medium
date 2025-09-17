@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pmflow_bnn"
+version = "0.1.0"
+description = "PMFlow dynamics and PMFlow-BNN models for PyTorch"
+readme = "README.md"
+requires-python = ">=3.8"
+authors = [
+  { name = "Tristan Mumford" },
+  { name = "Copilot" }
+]
+license = { text = "Public Domain" }
+dependencies = [
+  "torch>=1.10",
+  "torchvision",
+  "numpy",
+  "matplotlib",
+  "tqdm"
+]
+
+[project.urls]
+Homepage = "https://github.com/experimentech/Pushing-Medium"
+
+[tool.setuptools]
+packages = ["pmflow_bnn"]
+package-dir = {"pmflow_bnn" = "pmflow_bnn"}
