@@ -22,6 +22,7 @@ from .halos import (
     circular_velocity_nfw, circular_velocity_burkert, halo_velocity_profile,
     fit_halo_rotation_curve, fit_disk_halo_rotation_curve
 )
+from .compare import compare_models, aggregate_statistics, export_comparison_results
 
 __all__ = [
     'DiskParams', 'MediumParams', 'mass_enclosed_exponential', 'accel_baryonic',
@@ -31,4 +32,5 @@ __all__ = [
     'NFWParams', 'BurkertParams', 'mass_enclosed_nfw', 'mass_enclosed_burkert',
     'circular_velocity_nfw', 'circular_velocity_burkert', 'halo_velocity_profile',
     'fit_halo_rotation_curve', 'fit_disk_halo_rotation_curve'
+    , 'compare_models', 'aggregate_statistics', 'export_comparison_results'
 ]

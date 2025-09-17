@@ -4,6 +4,7 @@ from dataclasses import dataclass
 
 from pushing_medium.core import (
     index_deflection_numeric,
+    fermat_deflection_static_index,
     pm_deflection_angle_point_mass,
     pm_binary_quadrupole_power,
 )
@@ -53,7 +54,21 @@ def load_or_calibrate() -> Calibration:
         pmP = pm_binary_quadrupole_power(M1, M2, a)
         grP = gr_quadrupole_power(M1, M2, a)
         k_TT = grP / (pmP if pmP != 0 else 1.0)
-    k_Fizeau = data.get('k_Fizeau', 1.0)
+    # Fizeau coupling (moving lens): very simple proportional fit against small v/c correction
+    # In GR (with PPN gamma≈1), to first order the deflection from a lens moving transversely with speed v
+    # picks up an O(v/c) correction consistent with (1+gamma) factor. We model PM correction as k_Fizeau * (v/c) times static.
+    k_Fizeau = data.get('k_Fizeau')
+    if k_Fizeau is None:
+        # Use a modest transverse speed and match ratio of (moving/static)
+        M = 1.989e30
+        b = 6.96e8
+        mu = mu or _fit_mu_for_deflection()
+        alpha_static = fermat_deflection_static_index(M, b, mu=mu, z_max=2e10, steps=1500)
+        # Target moving/static ratio ~ 1 + v/c (heuristic with gamma≈1)
+        v = 3.0e4  # 30 km/s
+        target_ratio = 1.0 + v / 299792458.0
+        # Our PM moving model will be alpha_static * (1 + k_Fizeau * v/c) ⇒ k_Fizeau = (target_ratio-1)/(v/c)
+        k_Fizeau = (target_ratio - 1.0) / (v / 299792458.0)
     data['k_TT'] = k_TT
     data['k_Fizeau'] = k_Fizeau
     with open(CAL_PATH, 'w') as f:

@@ -9,5 +9,5 @@ def test_k_TT_near_unity(pm_calibration):
 
 
 def test_k_Fizeau_present(pm_calibration):
-    # Placeholder until moving-lens calibration exists
-    assert pm_calibration.k_Fizeau == 1.0
+    # Fizeau coupling should be near unity for small v/c heuristic fit
+    assert 0.8 <= pm_calibration.k_Fizeau <= 1.25

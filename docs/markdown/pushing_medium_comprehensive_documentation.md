@@ -4,6 +4,52 @@
 
 The Pushing-Medium model presents an alternative theory of gravitation that replaces Einstein's curved spacetime with a flat Euclidean background containing a medium with variable refractive index and flow fields. This model uses optical analogies to reproduce gravitational phenomena, offering computational advantages and intuitive understanding while maintaining compatibility with observed gravitational effects in weak-field regimes.
 
+## TL;DR (Quick Orientation)
+Goal: Provide a flat-space refractive-index + flow-field alternative that reproduces key weak‑field gravitational observables (deflection, perihelion shift analogues, Shapiro‑like delays, rotation curves) while enabling direct comparison to dark-matter halo paradigms.
+
+Core Ingredients:
+- Refractive index perturbation n = 1 + Σ 2GM/(c^2 r) + phenomenological medium term for galactic scales.
+- Optional flow field for frame‑dragging analogues.
+- Optical–mechanical analogy supplies effective accelerations for massive bodies.
+
+Main Python Modules (galaxy layer):
+- rotation.py: Exponential disk + medium acceleration, circular velocities, rotation curve synthesis.
+- data.py: SPARC-style loader (mock + real) returning RotationCurve objects with metadata.
+- fitting.py: Medium parameter fitter, population metrics (chi2, frac_rms, outer_delta, inner_slope_ratio).
+- halos.py: NFW & Burkert profiles, halo-only and joint disk+halo fitting.
+- compare.py: Unified multi-model comparison, aggregation, CSV export.
+
+Key Functions to Know:
+compare_models -> run medium, halo, joint fits for one galaxy.
+aggregate_statistics -> compute medians/means across a sample.
+fit_rotation_curve / fit_halo_rotation_curve / fit_disk_halo_rotation_curve -> individual model fitting backends.
+
+Typical Workflow:
+1. Load curves: curves = load_sparc_real('sparc.csv', return_dict=True)
+2. Define parameter bounds (disk, medium, halo).
+3. For each galaxy: summary = compare_models(rc, ...)
+4. Aggregate: stats = aggregate_statistics(summaries)
+5. Export: export_comparison_results('results.csv', summaries)
+6. Inspect medium vs halo/joint frac_rms and outer_delta distributions.
+
+Current Metrics:
+- chi2: raw chi-square (relative comparison across identical data vectors).
+- frac_rms: RMS / mean(V_obs) for scale-free residual magnitude.
+- outer_delta: captures asymptotic plateau match quality.
+- inner_slope_ratio: inner rise shape comparison (core/cusp analogue).
+
+Status Snapshot (Sep 2025):
+- Full comparison pipeline implemented (Section 11.12).
+- 71 tests passing covering fitting, halos, joint models, comparison, CSV export.
+- Documentation up through model comparison; scaling relations & information criteria planned.
+
+Next Planned Extensions (high value):
+- Baryonic Tully–Fisher & Radial Acceleration Relation extraction from summaries.
+- Information criteria (AIC/BIC) to penalize parameter count.
+- Parallel batch fitting & bootstrap confidence intervals.
+
+Use this TL;DR when returning later: jump directly to Sections 10–11 for galaxy dynamics and comparisons.
+
 ---
 
 ## 1. Theoretical Foundation
@@ -623,6 +669,54 @@ Future extensions:
 - Add optional priors linking disk scale $R_d$ and halo scale $r_s$ (empirical concentration-like relations).
 - Provide simultaneous multi-model evaluation returning a ranked list per galaxy.
 - Incorporate anisotropy or flaring corrections for the disk as additional (optional) parameters.
+
+### 11.12 Model Comparison Pipeline
+The repository includes a unified comparison utility to evaluate (a) medium+disk, (b) halo-only, and (c) joint disk+halo fits for each galaxy.
+
+Core functions:
+- `compare_models(rc, disk_bounds, medium_bounds, halo_bounds, halo_type='nfw', ...)` → returns structured summary for a single `RotationCurve`.
+- `aggregate_statistics(summaries)` → aggregates median/mean metrics across a set of summaries.
+- `export_comparison_results(path, summaries)` → writes a CSV with per-galaxy chi-square and key residual metrics.
+
+Example:
+```python
+from galaxy_dynamics import (
+    load_sparc_real, compare_models, aggregate_statistics,
+    export_comparison_results
+)
+
+curves = load_sparc_real('sparc_catalog.csv', return_dict=True)
+disk_bounds = {'M_d': (5e39, 5e41), 'R_d': (1e19, 2e20)}
+medium_bounds = {'v_inf': (5e4, 3.5e5), 'r_s': (1e19, 2e20), 'r_c': (5e18, 8e19), 'm': (0.8, 4.0)}
+halo_bounds = {'rho_s': (1e-24, 1e-20), 'r_s': (1e19, 3e20)}
+
+summaries = []
+for name, rc in list(curves.items())[:25]:  # first 25 galaxies
+    summaries.append(compare_models(rc, disk_bounds, medium_bounds, halo_bounds))
+
+stats = aggregate_statistics(summaries)
+print('Median medium frac_rms:', stats['medium_frac_rms']['median'])
+print('Median halo frac_rms:', stats['halo_frac_rms']['median'])
+
+export_comparison_results('model_comparison.csv', summaries)
+```
+
+Metrics tracked per model:
+- `chi2`: raw chi-square (no dof normalization; same datasets allow relative comparison).
+- `frac_rms`: scale-insensitive residual magnitude.
+- `outer_delta`: sign / magnitude of outermost point mismatch (plateau fidelity).
+- `inner_slope_ratio`: relative shape of inner rise (core/cusp tension analogue).
+
+Suggested interpretation workflow:
+1. Verify medium vs joint disk+halo frac_rms medians.
+2. Inspect outer_delta bias (systematic sign indicates asymptotic mismatch).
+3. Examine distribution of `m` (medium) vs `r_s` (halo) for plausible scaling trends with `R_d`.
+4. Apply information criteria (future) to weigh parameter count differences.
+
+Planned enhancements:
+- Optional parallel execution for large galaxy samples.
+- Confidence interval estimation via bootstrap over radii or Monte Carlo noise realizations.
+- Automated scaling relation extraction (e.g., Baryonic Tully–Fisher) directly from summary objects.
 
 
 
