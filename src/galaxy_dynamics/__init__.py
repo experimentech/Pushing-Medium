@@ -15,10 +15,12 @@ from .rotation import (
     mass_enclosed_exponential, accel_baryonic, delta_n_medium, accel_medium,
     circular_velocity, rotation_curve, deflection_angle_axisymmetric
 )
-from .data import RotationCurve, load_sparc_mock
+from .data import RotationCurve, load_sparc_mock, load_sparc_real
+from .fitting import fit_rotation_curve, chi_square
 
 __all__ = [
     'DiskParams', 'MediumParams', 'mass_enclosed_exponential', 'accel_baryonic',
     'delta_n_medium', 'accel_medium', 'circular_velocity', 'rotation_curve',
-    'deflection_angle_axisymmetric', 'RotationCurve', 'load_sparc_mock'
+    'deflection_angle_axisymmetric', 'RotationCurve', 'load_sparc_mock', 'load_sparc_real',
+    'fit_rotation_curve', 'chi_square'
 ]

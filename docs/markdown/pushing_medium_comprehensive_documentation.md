@@ -472,6 +472,40 @@ The test suite now exercises:
 
 This staged approach will isolate where the current phenomenological medium succeeds or diverges relative to empirical galaxy dynamics.
 
+### 11.8 Parameter Fitting Utility
+The module provides a lightweight chi-square fitter `fit_rotation_curve` combining a global random search with a local perturbative refinement stage. It estimates `DiskParams` (exponential disk mass and scale length) and `MediumParams` (asymptotic velocity scale and shaping radii) directly from an observed `RotationCurve`.
+
+Example:
+```python
+from galaxy_dynamics import load_sparc_real, fit_rotation_curve
+
+rc = load_sparc_real('sparc_catalog.csv', galaxy_name='GAL_X')
+disk_bounds = {'M_d': (1e40, 2e41), 'R_d': (2e19, 1.2e20)}
+medium_bounds = {'v_inf': (8e4, 3e5), 'r_s': (2e19, 1e20), 'r_c': (5e18, 5e19), 'm': (1.0, 4.0)}
+result = fit_rotation_curve(rc, disk_bounds, medium_bounds, n_random=300, n_refine=80)
+print('Chi2:', result['chi2'])
+print('Disk M_d:', result['disk'].M_d, 'R_d:', result['disk'].R_d)
+print('Medium v_inf:', result['medium'].v_inf)
+```
+
+Returned dictionary keys:
+- `disk`: best-fit `DiskParams`
+- `medium`: best-fit `MediumParams`
+- `chi2`: minimized chi-square value
+- `model`: list of model circular velocities (m/s)
+- `radii_m`: radii used for the fit (meters)
+
+Calibration / robustness suggestions:
+- Provide conservative bounds to avoid unrealistic degenerate solutions.
+- Increase `n_random` for broad, multi-modal landscapes; `n_refine` for local polishing.
+- Use logarithmic parameter transforms externally if spans exceed ~3 decades (current perturbation is linear percentage-based).
+- Consider pre-filtering inner radii where baryonic modeling uncertainties (e.g., beam smearing) dominate.
+
+Planned improvements:
+- Optional weighting by radial leverage or fractional errors.
+- Inclusion of halo comparison baselines (e.g., NFW, Burkert) for relative residual analysis.
+- Batch fitting helper returning population statistics and residual distributions.
+
 
 ## 11. Skeletons & flow‑map modelling
 
