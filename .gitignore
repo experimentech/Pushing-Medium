@@ -97,3 +97,13 @@ coverage.xml
 # Project-specific: demos outputs and caches
 Physics/__pycache__/
 Physics/demos/__pycache__/
+
+# Large dataset & model artifacts (prevent huge binaries)
+data/MNIST/
+programs/demos/**/data/MNIST/
+programs/demos/CNN/data/cifar-10-batches-py/
+programs/demos/data/MNIST/
+*.idx3-ubyte
+*.idx1-ubyte
+*cifar-10-batches-py*
+*.png
