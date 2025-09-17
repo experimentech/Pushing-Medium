@@ -190,21 +190,97 @@ def weak_bending_deflection_numeric(M: float, b: float, z_max: float = 50.0, ste
 
 
 def index_deflection_numeric(M: float, b: float, mu: float, z_max: float = 50.0, steps: int = 5000) -> float:
-        """
-        Numerically estimate light deflection using the PM index model:
-            n(r) = 1 + mu * M / r,  ln n = ln(1 + mu M / r)
-        Small-angle approximation: d kx/dz ≈ ∂/∂x ln n, with x=b, y=0, z as path parameter.
-        Deflection α ≈ ∫ (∂ ln n / ∂x) dz over z in [-z_max, z_max].
-        """
-        import numpy as np
+    """
+    Numerically estimate light deflection using the PM index model:
+        n(r) = 1 + mu * M / r,  ln n = ln(1 + mu M / r)
+    Small-angle approximation: d kx/dz ≈ ∂/∂x ln n, with x=b, y=0, z as path parameter.
+    Deflection α ≈ ∫ (∂ ln n / ∂x) dz over z in [-z_max, z_max].
+    """
+    import numpy as np
 
-        zs = np.linspace(-z_max, z_max, steps)
-        dz = zs[1] - zs[0]
-        alpha = 0.0
-        for z in zs:
-                r = math.sqrt(b * b + z * z) + 1e-30
-                n_val = 1.0 + (mu * M) / r
-                dndx = - (mu * M) * b / (r ** 3)
-                dlnndx = dndx / n_val
-                alpha += dlnndx * dz
-        return float(abs(alpha))
+    zs = np.linspace(-z_max, z_max, steps)
+    dz = zs[1] - zs[0]
+    alpha = 0.0
+    for z in zs:
+        r = math.sqrt(b * b + z * z) + 1e-30
+        n_val = 1.0 + (mu * M) / r
+        dndx = -(mu * M) * b / (r ** 3)
+        dlnndx = dndx / n_val
+        alpha += dlnndx * dz
+    return float(abs(alpha))
+
+
+def fermat_deflection_static_index(M: float, b: float, mu: float, z_max: float = 5.0, steps: int = 5000) -> float:
+    """
+    Small-angle ray deflection via Fermat optics with static index n = 1 + mu M / r.
+    Uses d kx/dz ≈ ∂/∂x ln n along a straight reference path (x=b, y=0, z variable).
+    """
+    return index_deflection_numeric(M, b, mu=mu, z_max=z_max, steps=steps)
+
+
+def moving_lens_deflection_first_order(
+    M: float,
+    b: float,
+    mu: float,
+    v_transverse: float,
+    k_fizeau: float,
+    z_max: float = 5.0,
+    steps: int = 5000,
+) -> float:
+    """Approximate transverse deflection for a lens moving with small transverse speed v≪c.
+
+    Model: start from static Fermat deflection α_static and apply a first-order correction
+        α ≈ α_static * (1 + k_fizeau * v/c)
+    where k_fizeau is calibrated (expected ≈1 in weak-field, γ≈1 scenario).
+
+    Parameters
+    ----------
+    M : float
+        Lens mass (kg).
+    b : float
+        Impact parameter (m).
+    mu : float
+        Index scaling coefficient (≈2G/c^2 after calibration).
+    v_transverse : float
+        Lens transverse speed relative to line of sight (m/s), assumed constant.
+    k_fizeau : float
+        Dimensionless coupling from calibration.
+    z_max, steps : integration controls for the static baseline.
+    """
+    alpha_static = fermat_deflection_static_index(M, b, mu=mu, z_max=z_max, steps=steps)
+    return alpha_static * (1.0 + k_fizeau * (v_transverse / c))
+
+
+def moving_lens_deflection_numeric(
+    M: float,
+    b: float,
+    mu: float,
+    v_transverse: float,
+    z_max: float = 5.0,
+    steps: int = 5000,
+) -> float:
+    """Numeric small-angle deflection for a lens moving at constant transverse speed v.
+
+    Assumptions / model:
+      - Lens moves along +x with x_L(z) = v * t, and we approximate t ≈ z / c for the un-deflected path.
+      - Ray reference path kept fixed at (x=b, y=0, z) (straight-line approximation).
+      - Index n(r,t) = 1 + mu M / |r - r_L(t)| with r_L(t) = (v t, 0, 0).
+      - Integrand uses instantaneous separation in x: (b - v z / c).
+
+    Returns absolute deflection angle α ≈ ∫ ∂_x ln n dz, analogous to the static integrator.
+    Accuracy: first-order in v/c and small bending; suitable for calibration of k_Fizeau.
+    """
+    import numpy as np
+
+    zs = np.linspace(-z_max, z_max, steps)
+    dz = zs[1] - zs[0]
+    alpha = 0.0
+    for z in zs:
+        x_rel = b - (v_transverse * z / c)
+        r = math.sqrt(x_rel * x_rel + z * z) + 1e-30
+        n_val = 1.0 + (mu * M) / r
+        # ∂n/∂x at x=b becomes with moving lens: dndx = -(mu M) * x_rel / r^3
+        dndx = -(mu * M) * x_rel / (r ** 3)
+        dlnndx = dndx / n_val
+        alpha += dlnndx * dz
+    return float(abs(alpha))

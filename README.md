@@ -90,6 +90,54 @@ See `docs/latex/all_formulas.tex` (or the Markdown equivalents under `docs/markd
 
 These are mapped into small, runnable demos wherever practical.
 
+## Physics libraries & testbench
+
+The repository now includes two lightweight Python packages (src layout) used by an automated pytest testbench:
+
+- `pushing_medium` — refractive index / flow model core functions (index from point masses or density, ray bending integrators, massive acceleration analogue, Plummer helpers, moving-lens approximations).
+- `general_relativity` — baseline weak‑field GR formulae (deflection, Shapiro delay, perihelion precession, frame‑drag, Einstein radius, quadrupole power, etc.).
+
+Calibration values (fitted once then cached in `tests/calibration.json`):
+- `mu_coeff` — index scaling (≈ 2G/c^2) fitted by matching numeric weak‑bending deflection to analytic 4GM/(c^2 b).
+- `k_TT` — tensor (quadrupole) normalization (≈ 1) via power ratio.
+- `k_Fizeau` — current heuristic (≈ 1) but numeric moving‑lens integrator shows negligible first‑order boost; will be refined with improved path integration.
+
+Run all tests:
+```bash
+pytest -q
+```
+
+## Ray bending helpers
+
+Implemented numerical small‑angle integrators:
+- `index_deflection_numeric(M, b, mu, ...)` — integrates ∂x ln n along a straight reference path.
+- `fermat_deflection_static_index(...)` — thin wrapper for clarity when used in Fermat‑style discussions.
+- `moving_lens_deflection_first_order(...)` — scales static deflection by (1 + k_Fizeau v/c) (model placeholder).
+- `moving_lens_deflection_numeric(...)` — explicit integration with a time‑dependent lens position x_L(z)=v z / c (straight path; first‑order in v/c).
+
+Current limitations:
+- Straight‑line path assumption breaks down nearer to a few Schwarzschild radii; we added a trend test instead of enforcing analytic GR there.
+- Moving‑lens numeric model shows a tiny negative O(1e‑5) fractional change ⇒ effective first‑order boost ~ 0 with present approximation.
+- No iterative curved‑path correction yet; planned (two‑pass or RK update of transverse position).
+
+## Convergence & validation tests
+
+Key test categories (all under `tests/` and passing):
+- Analytic parity (PM vs GR weak‑field deflection, Shapiro, redshift, perihelion, frame‑drag, lensing angle, GW power/speed, orbit energy).
+- Calibration verification (μ near 2G/c^2, k_TT ≈ 1, k_Fizeau present).
+- Numeric deflection convergence vs step count and z_max.
+- Moving lens: numeric vs first‑order ratio consistency for small v.
+- Strong‑field trend: deflection growth pattern & fitted log–log slope across 30→10 R_s (documentation of current integrator behavior).
+
+## Planned next steps
+
+- Iterative / curved‑path ray integrator for improved near‑critical bending.
+- Empirical re‑derivation of k_Fizeau from path‑corrected moving lens optics.
+- Adaptive z integration (smaller dz near closest approach) to speed convergence.
+- Optional effective metric export (mapping n, u_g to isotropic weak‑field metric components for comparison tables).
+
+If you’d like those implemented, open an issue or keep the chat session going.
+
 ## Troubleshooting
 
 - “Script exits with no window”: run headless (`HEADLESS=1`) and check the saved PNGs; interactive windows are disabled in headless mode.
