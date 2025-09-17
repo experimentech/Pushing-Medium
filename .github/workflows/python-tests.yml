@@ -24,3 +24,6 @@ jobs:
       - name: Run library tests
         run: |
           pytest programs/demos/nn_lib -q
+      - name: Run root tests
+        run: |
+          pytest tests -q
