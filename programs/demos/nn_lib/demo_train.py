@@ -14,7 +14,11 @@ try:
     )
 except ImportError:
     import sys
+    # Try adding the package dir near this demo
     sys.path.insert(0, os.path.dirname(__file__))
+    # Also try the conventional src/ layout at repo root
+    repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../.."))
+    sys.path.insert(0, os.path.join(repo_root, "src"))
     from pmflow_bnn import (
         get_model, PMBNNAlwaysPlastic, CNNBaseline, GRUBaseline,
         set_seed, count_params
