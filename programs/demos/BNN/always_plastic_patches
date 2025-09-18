@@ -1,0 +1,39 @@
+class PMBNNAlwaysPlastic(nn.Module):
+    def __init__(self, d_latent=8, channels=64, pm_steps=4, plastic=True):
+        super().__init__()
+        self.enc = nn.Sequential(
+            nn.Flatten(),
+            nn.Linear(28*28, 256), nn.Tanh(),
+            nn.Linear(256, d_latent)
+        )
+        self.pm = PMField(d_latent=d_latent, n_centers=48, steps=pm_steps)
+        self.ei = LateralEI(gain=0.06)
+        self.proj = nn.Linear(d_latent, channels)
+        self.readout = nn.Linear(channels, 10)
+        self.plastic = plastic  # master switch
+
+    def step(self, z, h):
+        z = self.pm(z)
+        h = 0.90*h + 0.10*torch.tanh(self.proj(z))
+        h = h + self.ei(z, h)
+        logits = self.readout(h)
+        return z, h, logits
+
+    def forward(self, x, T=5):
+        B = x.size(0)
+        z = self.enc(x)
+        h = torch.zeros(B, self.readout.in_features, device=x.device)
+        logits = None
+        for _ in range(T):
+            z, h, logits = self.step(z, h)
+            if self.plastic:
+                with torch.no_grad():
+                    pm_local_plasticity(self.pm, z, h)
+        return logits, (z, h)
+
+
+===========================================
+# in main()
+# Replace the standard BNN with the always-plastic one
+bnn = PMBNNAlwaysPlastic(d_latent=8, channels=64, pm_steps=4, plastic=True).to(device)
+

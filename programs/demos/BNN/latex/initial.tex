@@ -1,0 +1,153 @@
+\documentclass[12pt]{article}
+\usepackage{amsmath, amssymb, amsfonts}
+\usepackage{hyperref}
+\usepackage{listings}
+\usepackage{geometry}
+\geometry{margin=1in}
+
+\title{Concept Architecture for a PMFlow-Based Biological Neural Network}
+\author{}
+\date{}
+
+\begin{document}
+\maketitle
+
+\section{System Layout}
+\begin{itemize}
+    \item \textbf{Cortical sheet latent space:} A continuous manifold $\mathbf{z} \in \mathbb{R}^d$ (2D--32D) where neural activity lives as a field $\mathbf{h}(\mathbf{z}, t)$.
+    \item \textbf{Sensory maps as boundary conditions:} Input drives activity via channels projected onto the sheet: $\mathbf{I}(\mathbf{z}, t)$. Topography can be enforced by fixed ``afferent centers'' that pin inputs to neighborhoods.
+    \item \textbf{Flow fields as tissue dynamics:} Attractive/excitatory centers and repulsive/inhibitory centers define a refractive index $n(\mathbf{z})$ and a flow $\mathbf{u}(\mathbf{z}, t)$.
+    \item \textbf{Recurrent couplings:} Local Mexican-hat kernels for lateral inhibition; modular ``association bundles'' for long-range synchrony.
+    \item \textbf{Plasticity:} Local rules update field parameters (center locations, strengths $\mu$, inhibitory gains, homeostatic setpoints), plus synaptic kernels.
+\end{itemize}
+
+\section{Core Dynamics}
+
+\subsection{Flow Field from PM Refractive Index}
+
+
+\[
+n(\mathbf{z}) = 1 + \sum_{k}\frac{\mu_k}{\|\mathbf{z}-\mathbf{c}_k\| + \epsilon}, \quad
+\mathbf{g}(\mathbf{z}) = \nabla \ln n(\mathbf{z})
+\]
+
+
+
+\subsection{Recurrent Kernel (Excitatory--Inhibitory)}
+
+
+\[
+(\mathcal{K} \ast \mathbf{h})(\mathbf{z}) = \int \mathcal{K}(\mathbf{z}-\mathbf{z}')\,\mathbf{h}(\mathbf{z}',t)\,d\mathbf{z}'
+\]
+
+
+with $\mathcal{K} = K_E\,\mathrm{Gauss}(\sigma_E) - K_I\,\mathrm{Gauss}(\sigma_I)$, $\sigma_I>\sigma_E$.
+
+\subsection{Continuous-Time Update}
+
+
+\[
+\frac{d\mathbf{h}}{dt} = 
+-\alpha\,\mathbf{h} +
+D\,\Delta \mathbf{h} +
+(\mathbf{u}(\mathbf{z}, t)\cdot\nabla)\mathbf{h} +
+W\,\phi(\mathbf{h}) + (\mathcal{K}\ast \mathbf{h}) +
+B\,\mathbf{I}(\mathbf{z}, t) + \boldsymbol{\eta}(t)
+\]
+
+
+where $\mathbf{u}=\beta\,\mathbf{g}$ and $\phi$ is a saturating nonlinearity.
+
+\subsection{Optional Lyapunov-Like Energy}
+
+
+\[
+\mathcal{E}[\mathbf{h}] = \int \left(\frac{\alpha}{2}\|\mathbf{h}\|^2 + \frac{D}{2}\|\nabla \mathbf{h}\|^2 - \Psi(\mathbf{h}) - \frac{1}{2}\mathbf{h}^\top(\mathcal{K}\ast \mathbf{h})\right)\,d\mathbf{z}
+\]
+
+
+Design $\phi$ and $\mathcal{K}$ so that $d\mathcal{E}/dt \le 0$ in the absence of input.
+
+\section{Local Plasticity Rules}
+\begin{itemize}
+    \item \textbf{Center strength (Hebbian with decay):}
+    
+
+\[
+    \Delta \mu_k \propto \langle \mathbf{h}(\mathbf{c}_k,t)\cdot \mathbf{I}(\mathbf{c}_k,t) \rangle_\tau - \lambda_\mu \mu_k
+    \]
+
+
+    \item \textbf{Center position (gradient tug):}
+    
+
+\[
+    \Delta \mathbf{c}_k \propto -\nabla_{\mathbf{c}_k} \int w(\|\mathbf{z}-\mathbf{c}_k\|)\,\|\mathbf{h}(\mathbf{z},t)\|^2\, d\mathbf{z}
+    \]
+
+
+    \item \textbf{Lateral inhibitory gain homeostasis:}
+    
+
+\[
+    \Delta K_I \propto \left(\langle \|\mathbf{h}\|^2 \rangle - \rho\right)
+    \]
+
+
+    \item \textbf{STDP-like kernel update:} Maintain eligibility $e(\mathbf{z},t)$ with $\dot e = -e/\tau_e + \phi(\mathbf{h})$ and update:
+    
+
+\[
+    \Delta \mathcal{K}(\Delta \mathbf{z}) \propto 
+    \int \phi(\mathbf{h}(\mathbf{z},t))\, e(\mathbf{z}-\Delta\mathbf{z}, t - \delta)\,dt - \lambda_K \mathcal{K}
+    \]
+
+
+\end{itemize}
+
+\section{Minimal Implementation Sketch}
+\begin{lstlisting}[language=Python]
+class PMField(nn.Module):
+    def __init__(self, d_latent=8, n_centers=16, steps=4, dt=0.15, beta=1.0):
+        super().__init__()
+        self.centers = nn.Parameter(torch.randn(n_centers, d_latent)*0.7)
+        self.mus = nn.Parameter(torch.ones(n_centers)*0.5)
+        self.steps, self.dt, self.beta = steps, dt, beta
+
+    def grad_ln_n(self, z):
+        eps = 1e-4
+        n = torch.ones(z.size(0), device=z.device)
+        g = torch.zeros_like(z)
+        for c, mu in zip(self.centers, self.mus):
+            rvec = z - c
+            r = torch.sqrt((rvec*rvec).sum(dim=1) + eps)
+            n = n + mu / r
+            g += (-mu) * rvec / (r.pow(3).unsqueeze(1))
+        return g / n.unsqueeze(1)
+
+    def forward(self, z):
+        for _ in range(self.steps):
+            z = torch.clamp(z + self.dt * self.beta * self.grad_ln_n(z), -3.0, 3.0)
+        return z
+\end{lstlisting}
+
+\section{Evaluation Plan}
+\begin{itemize}
+    \item Attractor memory and pattern completion.
+    \item Sequential integration tasks.
+    \item Continual learning benchmarks.
+    \item Robustness to noise and occlusion.
+    \item Lesion studies.
+    \item Geometry diagnostics: skeletons, FTLE fields, monodromy.
+\end{itemize}
+
+\section{Biological Relevance}
+\begin{itemize}
+    \item Continuous dynamics without rigid layers.
+    \item Local learning rules.
+    \item Homeostasis and inhibition for stability.
+    \item Contextual routing via flow modulation.
+\end{itemize}
+
+\end{document}
+
