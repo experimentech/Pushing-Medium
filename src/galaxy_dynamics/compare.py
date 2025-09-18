@@ -30,9 +30,9 @@ def compare_models(
     metrics_joint = compute_residual_metrics(rc, joint_res['model'])
     return {
         'name': rc.name,
-        'medium': {'chi2': medium_res['chi2'], 'metrics': metrics_medium, 'params': {'disk': medium_res['disk'], 'medium': medium_res['medium']}},
-        'halo': {'chi2': halo_res['chi2'], 'metrics': metrics_halo, 'params': halo_res['params'], 'halo_type': halo_res['halo_type']},
-        'joint': {'chi2': joint_res['chi2'], 'metrics': metrics_joint, 'params': {'disk': joint_res['disk'], 'halo': joint_res['halo']}, 'halo_type': joint_res['halo_type']}
+        'medium': {'chi2': medium_res['chi2'], 'metrics': metrics_medium, 'params': {'disk': medium_res['disk'], 'medium': medium_res['medium']}, 'model': medium_res['model']},
+        'halo': {'chi2': halo_res['chi2'], 'metrics': metrics_halo, 'params': halo_res['params'], 'halo_type': halo_res['halo_type'], 'model': halo_res['model']},
+        'joint': {'chi2': joint_res['chi2'], 'metrics': metrics_joint, 'params': {'disk': joint_res['disk'], 'halo': joint_res['halo']}, 'halo_type': joint_res['halo_type'], 'model': joint_res['model']}
     }
 
 

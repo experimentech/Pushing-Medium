@@ -70,6 +70,17 @@ def load_sparc_mock(path: str | Path, galaxy_name: Optional[str] = None) -> Rota
     with path.open('r', newline='') as f:
         reader = csv.DictReader(f)
         headers = { _norm_header(h): h for h in reader.fieldnames or [] }
+        # Accept legacy / alternative column names (V_obs, Err_V)
+        # Normalize expected velocity column to v_obs_kms
+        alias_map = {
+            'v_obs_kms': ['v_obs_kms', 'v_obs'],
+            'ev_kms': ['ev_kms', 'err_v']
+        }
+        # inject aliases into headers mapping if present
+        for canonical, alts in alias_map.items():
+            for alt in alts:
+                if alt in headers and canonical not in headers:
+                    headers[canonical] = headers[alt]
         required = ['name','r_kpc','v_obs_kms']
         for req in required:
             if req not in headers:

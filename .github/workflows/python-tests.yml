@@ -20,7 +20,11 @@ jobs:
           pip install pytest
       - name: Install library (root pyproject)
         run: |
-          pip install . --index-url https://download.pytorch.org/whl/cpu
+          # Install torch/torchvision from the PyTorch CPU index first so the rest of the deps (e.g. matplotlib)
+          # are still resolved from PyPI (previously we overrode the index and matplotlib was missing there)
+          pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+          # Now install our package from the default PyPI index
+          pip install .
       - name: Run library tests
         run: |
           pytest programs/demos/nn_lib -q

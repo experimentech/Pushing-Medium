@@ -718,6 +718,88 @@ Planned enhancements:
 - Confidence interval estimation via bootstrap over radii or Monte Carlo noise realizations.
 - Automated scaling relation extraction (e.g., Baryonic Tully–Fisher) directly from summary objects.
 
+### 11.13 Scaling Relations & Statistical Model Ranking
+
+This section introduces automated extraction of two key empirical diagnostics used in galaxy dynamics: the Baryonic Tully–Fisher relation (BTF) and the Radial Acceleration Relation (RAR). These provide higher‑level validation beyond raw residual metrics.
+
+#### 11.13.1 Baryonic Tully–Fisher (BTF)
+Implementation (`relations.py`):
+- `extract_btf_points(summaries, model='medium')` → returns list of `(log10 V, log10 M_b)` where:
+    - `M_b` currently approximated by fitted exponential disk mass `M_d`.
+    - `V` = `v_max` of the model velocity array (medium / halo / joint) present in the comparison summary.
+- `compute_btf(summaries, model)` → runs OLS regression `log M_b = a + b log V` returning slope, intercept, scatter, N.
+
+Example:
+```python
+from galaxy_dynamics import compare_models, compute_btf
+summaries = [compare_models(rc, disk_bounds, medium_bounds, halo_bounds) for rc in rotation_curves]
+btf_medium = compute_btf(summaries, model='medium')
+print(btf_medium['slope'], btf_medium['scatter'])
+```
+
+Interpretation Notes:
+- Canonical observed slope ≈ 3.5–4.0 (exact sample selection dependent). Deviations may indicate systematic medium parameter scaling mismatch.
+- Scatter reduction relative to halo/joint variants could support the pushing‑medium parameter economy if similar fit quality is maintained.
+
+Limitations & Extensions:
+- Current baryonic mass proxy omits gas & bulge terms (future: incorporate component velocities or surface density columns from real SPARC metadata).
+- Characteristic velocity could be switched to `V(2.2 R_d)` or outer flat velocity; utility function will accept an optional strategy parameter in a future revision.
+
+#### 11.13.2 Radial Acceleration Relation (RAR)
+Implementation:
+- `extract_rar_points(summaries, rc_map, model='medium')` → builds arrays of `(g_bar, g_obs)` using:
+    - `g_obs = V_obs^2 / r`
+    - `g_bar` from enclosed mass of fitted exponential disk (`mass_enclosed_exponential` → Newtonian acceleration).
+- `compute_rar(summaries, rc_map, model)` → returns log scatter of `log10(g_obs) - log10(g_bar)` and count.
+
+Usage:
+```python
+rc_map = {rc.name: rc for rc in rotation_curves}
+rar_medium = compute_rar(summaries, rc_map, model='medium')
+print('RAR scatter:', rar_medium['scatter'])
+```
+
+Interpretation:
+- Low intrinsic scatter (≲ 0.1 dex) is a hallmark observational constraint. Elevated scatter may signal parameter degeneracies or missing baryonic components.
+- Systematic offset trend (e.g., consistent positive residual) could imply medium acceleration normalization adjustments.
+
+Planned Enhancements:
+- Add functional RAR fitting (e.g., McGaugh interpolating function) and return characteristic acceleration scale.
+- Bootstrap uncertainty estimates on slope/offset/scatter.
+- Include gas + bulge contributions when available.
+
+#### 11.13.3 Information Criteria (Coming Soon)
+To objectively compare differing parameter counts (medium: 6 params; halo-only: 2; joint: 4), we will add:
+- `aic = chi2 + 2k`
+- `bic = chi2 + k ln(n)`
+Where `k` counts free parameters and `n` is number of data points used in the fit.
+
+Planned API:
+```python
+from galaxy_dynamics.stats import compute_information_criteria
+ics = compute_information_criteria(summary_entry, n_points)
+print(ics['aic'], ics['bic'])
+```
+These values will be optionally appended inside `compare_models` (opt-in flag) and exported in comparison CSVs.
+
+#### 11.13.4 Workflow Integration
+1. Run `compare_models` across sample → build `summaries` list.
+2. Compute BTF & RAR for each model class: medium, halo, joint.
+3. (Future) Compute AIC/BIC to penalize extra parameters.
+4. Combine: look for a model that simultaneously minimizes residual metrics, scaling relation scatter, and information criteria.
+
+#### 11.13.5 Caveats
+- Small current test set: regression fits on a handful of galaxies are not statistically meaningful; treat as structural smoke tests.
+- Disk mass ↔ medium parameter correlations may bias BTF slope; future multi-component baryonic decomposition will mitigate this.
+- Use consistent distance/inclination corrections for real SPARC ingestion before comparing absolute slopes to literature.
+
+#### 11.13.6 Next Steps Checklist
+- [ ] Implement gas + bulge mass incorporation in `extract_btf_points` (if metadata present).
+- [ ] Add velocity strategy selector (`'vmax' | 'v2p2rd' | 'outer_mean'`).
+- [ ] Introduce RAR functional fit & acceleration scale output.
+- [ ] Implement information criteria utilities and integrate into CSV export.
+- [ ] Add statistical uncertainty estimation (bootstrap) for slopes & scatter.
+
 
 
 
