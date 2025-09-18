@@ -23,6 +23,10 @@ from .halos import (
     fit_halo_rotation_curve, fit_disk_halo_rotation_curve
 )
 from .compare import compare_models, aggregate_statistics, export_comparison_results
+from .relations import (
+    extract_btf_points, fit_btf, compute_btf,
+    extract_rar_points, compute_rar
+)
 
 __all__ = [
     'DiskParams', 'MediumParams', 'mass_enclosed_exponential', 'accel_baryonic',
@@ -33,4 +37,5 @@ __all__ = [
     'circular_velocity_nfw', 'circular_velocity_burkert', 'halo_velocity_profile',
     'fit_halo_rotation_curve', 'fit_disk_halo_rotation_curve'
     , 'compare_models', 'aggregate_statistics', 'export_comparison_results'
+    , 'extract_btf_points','fit_btf','compute_btf','extract_rar_points','compute_rar'
 ]
