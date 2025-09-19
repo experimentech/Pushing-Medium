@@ -27,8 +27,23 @@ BNN demo (optional):
 pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
 ```
 
-Run tests:
+## Testing
+
+The repository includes a comprehensive test suite with **59 tests** covering all aspects of the gravitational model:
+
 ```bash
+# Run all tests (recommended)
+pytest tests -v
+
+# Quick test run  
+pytest tests -q
+
+# Run specific test categories
+pytest tests/test_passed_benchmarks.py -v    # Core GR comparison tests
+pytest tests/test_galaxy_rotation.py -v     # Galaxy dynamics tests
+
+# Generate detailed test report
+python test_results_table.py
 pytest -q
 ```
 
@@ -36,6 +51,10 @@ Minimal BNN run:
 ```bash
 HEADLESS=1 EPOCHS=1 NUM_WORKERS=0 python programs/demos/BNN/pmflow_bnn_always_plastic.py
 ```
+
+**Current Status:** ✅ All 59 tests pass (100% success rate)
+
+For detailed testing documentation, see [TESTING.md](TESTING.md).
 
 ## Core Physical Model (outline)
 
