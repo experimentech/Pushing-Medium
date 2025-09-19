@@ -51,9 +51,9 @@ setup(
     keywords="neural-networks biological-networks gravitational-dynamics temporal-parallelism pushing-medium",
     python_requires=">=3.8",
     install_requires=[
-        "torch>=1.12.0",
-        "numpy>=1.21.0",
-        "typing-extensions>=4.0.0",
+        "torch>=1.8.0",
+        "numpy>=1.19.0",
+        "typing-extensions>=3.7.0",
     ],
     extras_require={
         "dev": [
@@ -72,7 +72,7 @@ setup(
             "tqdm>=4.60.0",
         ],
         "cuda": [
-            "torch[cuda]>=1.12.0",
+            "torch>=1.8.0",
         ],
     },
     include_package_data=True,
