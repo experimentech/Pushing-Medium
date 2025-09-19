@@ -123,3 +123,44 @@ python programs/demos/machine_learning/pygame_demos/plasticity_pong.py --device 
 ## Tips
 - If the BNN adapter can’t initialize, it falls back to Linear. You can force either mode via `--adapter`.
 - Watch the rolling loss and hit/miss counters as difficulty shifts; good adaptation drives down loss and increases hits over time.
+
+---
+
+# Live Synapse Explorer (pygame)
+
+A neuron grid with visible synapses that strengthen/weaken in real time.
+
+## What you should see
+- A grid of nodes; edges connect horizontal/vertical neighbors.
+- Edge thickness/color reflects weight magnitude/sign (green positive, red negative).
+- Painting input with the mouse stimulates neurons; weights adapt via a Hebbian rule.
+
+## Controls
+- Mouse drag: Paint input under the cursor (splashes to neighbors)
+- Space: Pause/resume
+- L: Toggle learning on/off
+- C: Clear activations
+- W: Reset weights
+- + / -: Increase / Decrease learning rate
+- D: Toggle higher weight decay
+- B: Toggle BNN assist (if available)
+- Q / Esc: Quit
+
+## Run it
+```bash
+python programs/demos/machine_learning/pygame_demos/live_synapse_explorer.py
+
+# Use local only (skip pip)
+python programs/demos/machine_learning/pygame_demos/live_synapse_explorer.py --no-github-install
+
+# Grid size and FPS
+python programs/demos/machine_learning/pygame_demos/live_synapse_explorer.py --grid-w 20 --grid-h 14 --fps 30
+
+# Force BNN assist on startup if available
+python programs/demos/machine_learning/pygame_demos/live_synapse_explorer.py --adapter bnn
+```
+
+## How it adapts
+- Leaky-integrator activations combine neighbor input, external input (mouse), and optional BNN-driven input.
+- Hebbian plasticity updates edge weights: Δw ≈ lr * (pre * post) − decay * w.
+- With BNN assist, a pmflow_bnn feature extractor learns a mapping from grid activity to an additional input drive that reconstructs the painted pattern more effectively over time.
