@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pmflow-bnn"
-version = "0.2.0"
+version = "0.2.1"
 description = "PMFlow Biological Neural Networks with Temporal Parallelism - Enhanced implementation of gravitational flow dynamics for neural computation"
 readme = "README.md"
 license = {file = "LICENSE"}

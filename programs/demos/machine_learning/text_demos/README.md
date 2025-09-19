@@ -49,3 +49,108 @@ Controls (interactive):
 - Expose plasticity switches per-module (embeddings only, recurrent only, both).
 - Save/restore the adapted state and compare trajectories.
 - Add a tiny reward signal for task-guided shaping (e.g., echo, rhyme, or style-matching).
+
+---
+
+## New: BNN-native Chatbot
+
+`bnn_chatbot.py` is a freestanding demo that uses PMFlow-BNN directly for sequence memory (no image projection):
+
+- Token embedding → tiny MLP → PMFlow latent z
+- PMBNNAlwaysPlastic (v0.2.0) advances state each token
+- Trainable readout to vocab; adapts online as you chat
+
+Run:
+```bash
+python programs/demos/machine_learning/text_demos/bnn_chatbot.py --corpus tiny --steps 200
+```
+
+Notes:
+- Requires nn_lib_v2 (pmflow_bnn) available in environment or via local path.
+- Commands: `:add <word>`, `:quit`.
+
+Teaching interface (extra commands):
+- `:define <word> = <phrase>`  Pulls the word’s embedding toward the mean of the phrase, shaping meaning.
+- `:alias w1 w2`               Brings the two words’ embeddings closer, teaching synonyms.
+- `:neighbors <word> [k]`      Shows nearest neighbors in embedding space.
+- `:concept name = w1 w2 ...`  Defines a concept set and clusters members toward a centroid.
+- `:tag <word> <concept>`      Adds a word to a concept and pulls it toward the concept centroid.
+- `:gen [n] [temp] [topk]`     Adjusts reply generation length/temperature/top-k.
+- `:stats`                     Displays top co-occurring word pairs observed.
+- `:save path` / `:load path`  Save/restore embeddings and readout.
+
+### Effective usage: teaching workflow
+
+1) Start with optimized PMFlow settings
+- Prefer the always-plastic model and an autoscaled profile:
+	- `--pmflow-model always_plastic_v2 --pmflow-profile auto --plasticity-lr 2e-3`
+
+2) Seed a tiny base corpus (optional)
+- Use `--corpus tiny --steps 200` to pre-warm the readout layer on simple next-token pairs.
+
+3) Introduce vocabulary in-context
+- Just type sentences; unknown words are auto-added and begin adapting via co-occurrence:
+	- `A banana is a type of fruit.`
+	- `An apple is red or green.`
+
+4) Teach definitions and clusters explicitly
+- Definitions pull a word toward a phrase’s mean embedding and apply PMFlow plasticity from that phrase:
+	- `:define apple = a sweet fruit`
+- Concepts cluster multiple tokens and adapt PMFlow to the cluster:
+	- `:concept fruit = apple banana orange pear`
+	- `:tag mango fruit`
+
+5) Inspect and refine
+- Nearest neighbors reveal semantic neighborhoods:
+	- `:neighbors apple 10`
+- Co-occurrence stats highlight frequent pairs:
+	- `:stats`
+
+6) Generate replies and tune decoding
+- Adjust length/temperature/top-k for the reply generator:
+	- `:gen 16 0.9 8`
+
+7) Save progress
+- `:save runs/fruit_session.pt` and later `:load runs/fruit_session.pt`
+
+### Troubleshooting
+- The bot repeats `<unk>`: add words with `:add` or define them with `:define ...`.
+- Meanings feel unstable: reduce `--plasticity-lr` (e.g., `1e-3`) or increase warmup `--steps`.
+- Associations are too weak: repeat `:define`/`:concept` or temporarily increase `--plasticity-lr`.
+- Performance: set `--pmflow-profile cpu` on low-memory systems or `single_gpu`/`multi_gpu` if available.
+
+### Worst Chatbot Ever: why it doesn’t work (on purpose)
+
+This chatbot is intentionally “bad” as a teaching artifact. It’s a tiny plastic memory with almost no language prior. When you feed it a whole book, it happily absorbs statistics it can’t use for fluent conversation.
+
+What it is not:
+- A trained language model. No large pretraining; only a small readout with light warmup.
+- An expert system. `:define / :concept / :alias` nudge vectors and PM centers; no symbolic rules/facts.
+- A capable sequence decoder. PMFlow-BNN here is a plastic attractor memory, not a predictive LM.
+
+Why it fails at chat:
+- Frequency dominance: ingesting big text floods the head with high-frequency tokens → loops/echoes.
+- Unlabeled ingestion: reading lines doesn’t optimize a next-token objective; it shapes co-occurrence only.
+- Thin decoding: even with top-p and repetition penalties, coherence is limited without a strong model.
+- Catastrophic drift: online plasticity pulls meanings; recent inputs dominate.
+- Naive tokenization & boilerplate: whitespace tokens and public-domain headers pollute the space.
+
+Why keep the BNN core:
+- PMFlow-BNN (AlwaysPlastic) is a neat, continuous, local memory that adapts in real time—great for demos of plasticity, concepts, and neighborhoods.
+
+Mitigations (to make it less terrible, not good):
+- Ingestion: `--train-quiet`, multiple `--train-script`, prepare cleaner input (filter headers/stopwords).
+- Stability: `--fast-repl`, `--plastic-every N`, `--renorm-head`, optional `--consolidate-steps K`.
+- Decoding: `:gen … top_p rep_penalty`, `:bias co X concept Y`.
+- Retrieval: “what is X” returns stored `:define` phrases; simple concept membership answers.
+
+Reproduce the failure and explore:
+```bash
+python programs/demos/machine_learning/text_demos/bnn_chatbot.py \
+	--pmflow-profile cpu \
+	--pmflow-model always_plastic_v2 \
+	--train-quiet --fast-repl --plastic-every 8 --renorm-head \
+	--train-script programs/demos/machine_learning/text_demos/training/fruit_bootstrap.txt \
+	--train-script programs/demos/machine_learning/text_demos/training/the_call_of_cthulhu.txt
+```
+Then try `:define` / `:concept` and ask “what is X”. It will still be a terrible chatbot—by design—but you’ll see plasticity in action.

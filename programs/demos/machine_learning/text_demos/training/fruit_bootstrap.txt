@@ -1,0 +1,11 @@
+:define apple = a sweet fruit
+:define banana = a sweet fruit
+:define orange = a sweet fruit
+:define pear = a sweet fruit
+:concept fruit = apple banana orange pear
+:tag mango fruit
+:alias red scarlet
+:define apple colour = red or green or yellow
+:define banana colour = yellow
+:define orange colour = orange
+:neighbors apple 10

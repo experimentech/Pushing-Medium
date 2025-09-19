@@ -1,4 +1,6 @@
+import torch
 import torch.nn as nn
+from .pmflow import ParallelPMField
 
 class CNNBaseline(nn.Module):
     def __init__(self, n_classes=10):
@@ -46,3 +48,41 @@ class MLPBaseline(nn.Module):
     
     def forward(self, x):
         return self.net(x)
+
+
+class PMFlowCNN(nn.Module):
+    """CNN with PMFlow latent field integration (v0.2.0).
+
+    Pipeline: Conv -> Flatten -> Linear to latent -> ParallelPMField -> Linear head
+    This model applies PMFlow physics to a compact latent before classification.
+    """
+    def __init__(self,
+                 n_classes: int = 10,
+                 d_latent: int = 64,
+                 n_centers: int = 32,
+                 pm_steps: int = 4,
+                 dt: float = 0.15,
+                 beta: float = 1.2,
+                 clamp: float = 3.0):
+        super().__init__()
+        self.conv = nn.Sequential(
+            nn.Conv2d(1, 32, 3, padding=1), nn.ReLU(),
+            nn.Conv2d(32, 64, 3, padding=1), nn.ReLU(),
+            nn.MaxPool2d(2),
+            nn.Conv2d(64, 128, 3, padding=1), nn.ReLU(),
+            nn.MaxPool2d(2),
+            nn.AdaptiveAvgPool2d((4, 4)),
+            nn.Flatten()
+        )
+        self.to_latent = nn.Linear(128 * 4 * 4, d_latent)
+        self.pm = ParallelPMField(d_latent=d_latent, n_centers=n_centers,
+                                  steps=pm_steps, dt=dt, beta=beta, clamp=clamp)
+        self.head = nn.Linear(d_latent, n_classes)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        if x.ndim == 3:
+            x = x.unsqueeze(1)
+        z = self.conv(x)
+        z = self.to_latent(z)
+        z = self.pm(z)
+        return self.head(z)
