@@ -63,7 +63,9 @@ class PMFlowCNN(nn.Module):
                  pm_steps: int = 4,
                  dt: float = 0.15,
                  beta: float = 1.2,
-                 clamp: float = 3.0):
+                 clamp: float = 3.0,
+                 temporal_parallel: bool = True,
+                 chunk_size: int = 16):
         super().__init__()
         self.conv = nn.Sequential(
             nn.Conv2d(1, 32, 3, padding=1), nn.ReLU(),
@@ -75,8 +77,16 @@ class PMFlowCNN(nn.Module):
             nn.Flatten()
         )
         self.to_latent = nn.Linear(128 * 4 * 4, d_latent)
-        self.pm = ParallelPMField(d_latent=d_latent, n_centers=n_centers,
-                                  steps=pm_steps, dt=dt, beta=beta, clamp=clamp)
+        self.pm = ParallelPMField(
+            d_latent=d_latent,
+            n_centers=n_centers,
+            steps=pm_steps,
+            dt=dt,
+            beta=beta,
+            clamp=clamp,
+            temporal_parallel=temporal_parallel,
+            chunk_size=chunk_size,
+        )
         self.head = nn.Linear(d_latent, n_classes)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
