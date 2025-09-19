@@ -21,23 +21,88 @@ import time
 import pygame
 import numpy as np
 
-# Try to import nn_lib_v2 locally
-# Ensures we use the exact library from this repo without pip
 import os
-repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../..", ".."))
-# repo_root points to .../gravity
-nn_lib_path = os.path.join(repo_root, "programs", "demos", "machine_learning", "nn_lib_v2")
-if os.path.exists(nn_lib_path) and nn_lib_path not in sys.path:
-    sys.path.insert(0, nn_lib_path)
+import subprocess
+import argparse
 
-# Optional BNN adapter
-BNN_AVAILABLE = False
-try:
-    import torch
-    from pmflow_bnn import get_model_v2, get_performance_config
-    BNN_AVAILABLE = True
-except Exception:
-    BNN_AVAILABLE = False
+#
+# pmflow_bnn import/install setup (mirrors notebook flow)
+# Tries GitHub pip install (subdirectory) then falls back to local path
+#
+PMFLOW_IMPORT = {
+    'available': False,
+    'source': 'none',
+    'version': 'Unknown',
+}
+
+def setup_pmflow_bnn(nn_lib_path_override=None, allow_github_install=True):
+    global PMFLOW_IMPORT, get_model_v2, get_performance_config, torch
+    PMFLOW_IMPORT = {'available': False, 'source': 'none', 'version': 'Unknown'}
+
+    # Optional local override path
+    repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../..", ".."))
+    default_nn_lib_path = os.path.join(repo_root, "programs", "demos", "machine_learning", "nn_lib_v2")
+    nn_lib_path = nn_lib_path_override or default_nn_lib_path
+
+    # Step 0: Try importing from the current environment first
+    try:
+        import torch  # noqa: F401
+        from pmflow_bnn import get_model_v2, get_performance_config  # type: ignore
+        PMFLOW_IMPORT['available'] = True
+        PMFLOW_IMPORT['source'] = 'environment'
+        try:
+            from pmflow_bnn.version import __version__  # type: ignore
+            PMFLOW_IMPORT['version'] = __version__
+        except Exception:
+            PMFLOW_IMPORT['version'] = 'Development'
+        print("✅ PMFlow BNN found in current environment")
+        print(f"📦 Version: {PMFLOW_IMPORT['version']}")
+        return
+    except Exception:
+        pass
+
+    # Step 1: Try GitHub pip install (subdirectory)
+    install_outcome = 'local'
+    if allow_github_install:
+        try:
+            print("🚀 Attempting to install PMFlow BNN v0.2.0 from GitHub...")
+            print("📦 Installing: git+https://github.com/experimentech/Pushing-Medium.git#subdirectory=programs/demos/machine_learning/nn_lib_v2")
+            result = subprocess.run([
+                sys.executable, '-m', 'pip', 'install',
+                'git+https://github.com/experimentech/Pushing-Medium.git#subdirectory=programs/demos/machine_learning/nn_lib_v2'
+            ], stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
+            if result.returncode == 0:
+                install_outcome = 'github'
+            else:
+                print(f"⚠️ GitHub installation failed: {result.stderr.splitlines()[-1] if result.stderr else 'unknown error'}")
+        except Exception as e:
+            print(f"⚠️ GitHub installation error: {e}")
+
+    # Step 2: Local development fallback path (prepend if available)
+    if install_outcome != 'github':
+        if os.path.exists(nn_lib_path) and nn_lib_path not in sys.path:
+            sys.path.insert(0, nn_lib_path)
+            print(f"📂 Added local library path: {nn_lib_path}")
+
+    # Step 3: Try to import again
+    try:
+        import torch  # noqa: F401
+        from pmflow_bnn import get_model_v2, get_performance_config  # type: ignore
+        PMFLOW_IMPORT['available'] = True
+        PMFLOW_IMPORT['source'] = install_outcome
+        try:
+            from pmflow_bnn.version import __version__  # type: ignore
+            PMFLOW_IMPORT['version'] = __version__
+        except Exception:
+            PMFLOW_IMPORT['version'] = 'Development'
+        print("✅ PMFlow BNN library imported successfully")
+        print(f"📍 Installation source: {PMFLOW_IMPORT['source']}")
+        print(f"📦 Version: {PMFLOW_IMPORT['version']}")
+    except Exception as e:
+        PMFLOW_IMPORT['available'] = False
+        PMFLOW_IMPORT['source'] = 'none'
+        print(f"❌ PMFlow BNN not available: {e}")
+        print("📝 Falling back to Linear adapter. You can specify --adapter linear to silence this message.")
 
 WIDTH, HEIGHT = 800, 600
 WHITE = (240, 240, 240)
@@ -72,31 +137,64 @@ class BNNAdapter:
     Fallback to simple linear head on top of frozen BNN if needed.
     """
     def __init__(self, device="cpu"):
+        if 'torch' not in globals():
+            raise RuntimeError("torch not available for BNNAdapter")
         self.device = torch.device(device)
+        # Choose conservative config; model will be used as frozen feature extractor
         cfg = get_performance_config("cpu")
         self.model = get_model_v2(**cfg).to(self.device)
-        # A tiny linear head to map model latent to (dx, dy)
-        # If model outputs logits, we just take as features
-        self.head = torch.nn.Linear(10, 2).to(self.device)
-        self.opt = torch.optim.Adam(list(self.model.parameters()) + list(self.head.parameters()), lr=1e-3)
+        for p in self.model.parameters():
+            p.requires_grad_(False)
+
+        # Discover acceptable input dimension and feature dimension
+        self.input_dim = None
+        self.feat_dim = None
+        probe_dims = [28*28, 128, 64, 16, 2]
+        with torch.no_grad():
+            for d in probe_dims:
+                try:
+                    dummy = torch.zeros(1, d, device=self.device)
+                    out = self.model(dummy)
+                    if isinstance(out, tuple):
+                        out = out[0]
+                    out = out.view(1, -1)
+                    self.input_dim = d
+                    self.feat_dim = out.shape[1]
+                    break
+                except Exception:
+                    continue
+        if self.input_dim is None or self.feat_dim is None:
+            # Fallback to identity linear adapter behavior
+            raise RuntimeError("Failed to infer model input/feature dims for BNNAdapter")
+
+        self.head = torch.nn.Linear(self.feat_dim, 2).to(self.device)
+        self.opt = torch.optim.Adam(self.head.parameters(), lr=5e-3)
         self.loss_fn = torch.nn.MSELoss()
 
     def forward(self, x_np):
-        x = torch.tensor(x_np, dtype=torch.float32, device=self.device).view(1, -1)
+        # Zero-pad 2D sensed input to model's expected input length
+        x = np.zeros((self.input_dim,), dtype=np.float32)
+        x[:min(2, self.input_dim)] = x_np[:min(2, self.input_dim)]
+        xt = torch.tensor(x, dtype=torch.float32, device=self.device).view(1, -1)
         with torch.no_grad():
-            feats = self.model(x)  # expect shape [1,10]
+            feats = self.model(xt)
             if isinstance(feats, tuple):
                 feats = feats[0]
+            feats = feats.view(1, -1)
         y = self.head(feats)
         return y.detach().cpu().view(-1).numpy()
 
     def step(self, x_np, target_np):
-        self.opt.zero_grad()
-        x = torch.tensor(x_np, dtype=torch.float32, device=self.device).view(1, -1)
+        # Build padded input
+        x = np.zeros((self.input_dim,), dtype=np.float32)
+        x[:min(2, self.input_dim)] = x_np[:min(2, self.input_dim)]
+        xt = torch.tensor(x, dtype=torch.float32, device=self.device).view(1, -1)
         t = torch.tensor(target_np, dtype=torch.float32, device=self.device).view(1, -1)
-        feats = self.model(x)
+        self.opt.zero_grad()
+        feats = self.model(xt)
         if isinstance(feats, tuple):
             feats = feats[0]
+        feats = feats.view(1, -1)
         y = self.head(feats)
         loss = self.loss_fn(y, t)
         loss.backward()
@@ -126,10 +224,20 @@ REMAPPINGS = [
 ]
 
 class Agent:
-    def __init__(self, use_bnn=False):
+    def __init__(self, use_bnn=False, device="cpu"):
         self.pos = np.array([WIDTH*0.5, HEIGHT*0.5], dtype=np.float32)
-        self.adapter = BNNAdapter() if use_bnn and BNN_AVAILABLE else LinearAdapter(lr=0.15)
-        self.use_bnn = use_bnn and BNN_AVAILABLE
+        # Choose adapter
+        if use_bnn and PMFLOW_IMPORT.get('available', False):
+            try:
+                self.adapter = BNNAdapter(device=device)
+                self.use_bnn = True
+            except Exception as e:
+                print(f"⚠️ Falling back to Linear adapter (BNN init failed): {e}")
+                self.adapter = LinearAdapter(lr=0.15)
+                self.use_bnn = False
+        else:
+            self.adapter = LinearAdapter(lr=0.15)
+            self.use_bnn = False
 
     def update(self, sensed, target_pos):
         # sensed is the remapped observation of target relative position
@@ -178,15 +286,48 @@ def draw_text(surf, text, x, y, color=BLACK, size=18):
 
 
 def main():
+    # CLI
+    parser = argparse.ArgumentParser(description="Sensory Remapping Demo (nn_lib_v2 hook)")
+    parser.add_argument('--adapter', choices=['auto','bnn','linear'], default='auto', help='Adapter selection')
+    parser.add_argument('--device', choices=['auto','cpu','cuda'], default='auto', help='Computation device')
+    parser.add_argument('--nn-lib-path', type=str, default=None, help='Override local nn_lib_v2 path')
+    parser.add_argument('--no-github-install', action='store_true', help='Do not attempt GitHub pip install')
+    parser.add_argument('--fps', type=int, default=60, help='Target FPS')
+    parser.add_argument('--auto-switch', type=float, default=8.0, help='Seconds between auto remap switches')
+    args = parser.parse_args()
+
+    # Setup pmflow_bnn import flow
+    setup_pmflow_bnn(nn_lib_path_override=args.nn_lib_path, allow_github_install=not args.no_github_install)
+
+    # Device selection
+    device = 'cpu'
+    try:
+        import torch  # noqa: F401
+        if args.device == 'cuda':
+            device = 'cuda' if torch.cuda.is_available() else 'cpu'
+        elif args.device == 'auto':
+            device = 'cuda' if torch.cuda.is_available() else 'cpu'
+        else:
+            device = 'cpu'
+    except Exception:
+        device = 'cpu'
+
     pygame.init()
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
     pygame.display.set_caption("Sensory Remapping Demo (nn_lib_v2 hook)")
     clock = pygame.time.Clock()
 
     paused = False
-    use_bnn = BNN_AVAILABLE  # auto-enable if library present
-    agent = Agent(use_bnn=use_bnn)
-    world = World(remap_idx=0, auto_switch_s=8.0)
+    # Adapter selection
+    if args.adapter == 'bnn':
+        use_bnn = PMFLOW_IMPORT.get('available', False)
+    elif args.adapter == 'linear':
+        use_bnn = False
+    else:
+        use_bnn = PMFLOW_IMPORT.get('available', False)
+
+    agent = Agent(use_bnn=use_bnn, device=device)
+    world = World(remap_idx=0, auto_switch_s=float(args.auto_switch))
 
     losses = []
     running = True
@@ -230,10 +371,12 @@ def main():
         draw_text(screen, f"Remap: {world.remap_name}", 10, 10)
         draw_text(screen, f"Adapter: {'BNN (nn_lib_v2)' if agent.use_bnn else 'Linear'}", 10, 30)
         draw_text(screen, f"Loss: {np.mean(losses[-50:]):.3f}", 10, 50)
+        info = f"pmflow: {PMFLOW_IMPORT['source']} {PMFLOW_IMPORT['version']} | device: {device} | FPS target: {args.fps}"
+        draw_text(screen, info, 10, 70)
         draw_text(screen, "Keys: [Space]=Pause  [M]=Cycle Map  [R]=Force Remap  [Q/Esc]=Quit", 10, 570)
 
         pygame.display.flip()
-        clock.tick(60)
+        clock.tick(int(args.fps))
 
     pygame.quit()
 
