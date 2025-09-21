@@ -1,0 +1,11 @@
+# Ignore generated renders and videos
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.mp4
+*.mov
+*.webm
+
+# But keep placeholder for directory
+!.gitignore
