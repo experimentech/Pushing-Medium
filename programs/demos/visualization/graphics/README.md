@@ -66,6 +66,9 @@ Note: If `--out` is a bare filename, images are saved alongside these scripts, n
 - `--steps`, `--ds`, `--far`, `--hit-eps`: Control integrator step size and limits.
 - `--device {auto,cpu,cuda}` and `--dtype {fp32,fp16}`: Choose runtime.
 - Raytracer: `--orient`, `--rotate`, `--flip-x/y` to match earlier reference images.
+- Raytracer: `--orient`, `--rotate`, `--flip-x/y` to match earlier reference images.
+  - `--no-plane`: Hide the ground plane (useful to confirm objects are visible)
+  - `--no-object-priority`: Disable object-first hit resolution (defaults to object-priority ON)
 - Radiosity: `--accum {camera,topdown}`, `--x-range`, `--z-range` (topdown only), `--albedo-bleed`, `--filter-sigma`.
 
 ## Tips
@@ -73,3 +76,7 @@ Note: If `--out` is a bare filename, images are saved alongside these scripts, n
 - For negative ranges in `--x-range`/`--z-range`, use equals syntax (e.g., `--x-range=-3,3`).
 - CUDA + fp16 can be very fast when available, but keep an eye on precision.
 - Camera-accumulated radiosity is inherently sparse at low photon counts — increase photons, bounces, and add mild blur for readability.
+
+### Orientation note
+
+The raytracer’s default `--rotate` is `none`. If you prefer the floor visually at the bottom (matching earlier results), add `--rotate 180`.

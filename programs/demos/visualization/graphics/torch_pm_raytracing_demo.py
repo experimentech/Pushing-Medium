@@ -137,6 +137,19 @@ def scene_sdf(p: torch.Tensor, include_plane: bool = True) -> torch.Tensor:
         return d
 
 
+def scene_sdf_components(p: torch.Tensor):
+    """Return (d_obj, d_plane) where d_obj is the smooth-min of objects and d_plane is y+1."""
+    ps = p - torch.tensor([-0.8, -0.1, 2.2], device=p.device, dtype=p.dtype)
+    d1 = sd_sphere(ps, 0.7)
+    pb = p - torch.tensor([1.0, 0.2, 2.8], device=p.device, dtype=p.dtype)
+    d2 = sd_round_box(pb, torch.tensor([0.6, 0.4, 0.8], device=p.device, dtype=p.dtype), 0.15)
+    k = 0.25
+    h = (0.5 + 0.5 * (d2 - d1) / k).clamp(0.0, 1.0)
+    d_obj = (1 - h) * d2 + h * d1 - k * h * (1 - h)
+    d_plane = p[..., 1] + 1.0
+    return d_obj, d_plane
+
+
 def estimate_normal(p: torch.Tensor, include_plane: bool = True) -> torch.Tensor:
     # Finite difference normal of SDF (vectorized)
     e = 1e-3
@@ -232,7 +245,8 @@ def render(pm: PMField,
            orient: str = 'standard',
            device: str = 'cpu',
            dtype=torch.float32,
-           include_plane: bool = True) -> torch.Tensor:
+           include_plane: bool = True,
+           object_priority: bool = True) -> torch.Tensor:
     """
     Returns: image tensor [H,W,3] in [0,1].
     """
@@ -270,11 +284,26 @@ def render(pm: PMField,
         for _ in range(max_steps):
             if pi.numel() == 0:
                 break
-            d = scene_sdf(pi, include_plane)
-            hit = d < hit_epsilon
-            if hit.any():
+            if include_plane:
+                d_obj, d_plane = scene_sdf_components(pi)
+                # Object-priority: prefer object hits when both are close
+                if object_priority:
+                    hit_obj = d_obj < hit_epsilon
+                    hit_plane = (d_plane < hit_epsilon) & (~hit_obj)
+                else:
+                    # default min behavior
+                    hit_plane = (d_plane <= d_obj) & (d_plane < hit_epsilon)
+                    hit_obj = (d_obj < d_plane) & (d_obj < hit_epsilon)
+                any_hit_mask = hit_obj | hit_plane
+            else:
+                d_obj = scene_sdf(pi, include_plane=False)
+                hit_plane = torch.zeros(pi.shape[0], dtype=torch.bool, device=device)
+                hit_obj = d_obj < hit_epsilon
+                any_hit_mask = hit_obj
+
+            if any_hit_mask.any():
                 # Count plane vs object at hit points for diagnostics
-                hp = pi[hit]
+                hp = pi[any_hit_mask]
                 # recompute object smooth-min vs plane
                 ps = hp - torch.tensor([-0.8, -0.1, 2.2], device=device, dtype=dtype)
                 d1 = sd_sphere(ps, 0.7)
@@ -286,15 +315,15 @@ def render(pm: PMField,
                 d_plane_hit = hp[...,1] + 1.0
                 is_plane_hit = d_plane_hit <= d_obj
                 if include_plane:
-                    plane_hits += int(is_plane_hit.count_nonzero().item())
+                    plane_hits += int((is_plane_hit).count_nonzero().item())
                     object_hits += int((~is_plane_hit).count_nonzero().item())
                 else:
-                    object_hits += int(hit.count_nonzero().item())
+                    object_hits += int(any_hit_mask.count_nonzero().item())
 
-                col = shade(hp, ki[hit], device, dtype, include_plane)
-                color[active_idx[hit]] = col
-                hit_mask[active_idx[hit]] = True
-                keep = ~hit
+                col = shade(hp, ki[any_hit_mask], device, dtype, include_plane)
+                color[active_idx[any_hit_mask]] = col
+                hit_mask[active_idx[any_hit_mask]] = True
+                keep = ~any_hit_mask
                 pi = pi[keep]
                 ki = ki[keep]
                 active_idx = active_idx[keep]
@@ -381,12 +410,13 @@ def main():
     parser.add_argument('--device', type=str, default='auto', choices=['auto','cpu','cuda'])
     parser.add_argument('--dtype', type=str, default='fp32', choices=['fp16','fp32'])
     parser.add_argument('--no-bend', action='store_true', help='Disable PM curvature (debug)')
-    parser.add_argument('--rotate', type=str, default='180', choices=['none','90ccw','90cw','180'], help='Rotate final image for presentation')
+    parser.add_argument('--rotate', type=str, default='none', choices=['none','90ccw','90cw','180'], help='Rotate final image for presentation')
     parser.add_argument('--orient', type=str, default='standard', choices=['standard','legacy'], help='Camera/image mapping convention')
     parser.add_argument('--flip-x', action='store_true', help='Mirror final image horizontally')
     parser.add_argument('--flip-y', action='store_true', help='Mirror final image vertically')
     parser.add_argument('--bend-strength', type=float, default=1.0, help='Scale curvature strength (0..1 recommended)')
     parser.add_argument('--no-plane', action='store_true', help='Disable the ground plane (debug objects)')
+    parser.add_argument('--no-object-priority', action='store_true', help='Do not prioritize object hits over plane hits')
     args = parser.parse_args()
 
     dev = 'cuda' if (args.device == 'cuda' or (args.device == 'auto' and torch.cuda.is_available())) else 'cpu'
@@ -433,7 +463,9 @@ def main():
                  chunk_size=args.chunk if args.chunk > 0 else None,
                  device=dev,
                  dtype=dtype,
-                 include_plane=(not args.no_plane))
+                 include_plane=(not args.no_plane),
+                 object_priority=(not args.no_object_priority))
+                 
 
     # Gamma and save
     img_np = (img.clamp(0, 1) ** (1.0 / 2.2)).detach().cpu().numpy()
