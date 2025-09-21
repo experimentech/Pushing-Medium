@@ -117,7 +117,7 @@ def sd_round_box(p: torch.Tensor, b: torch.Tensor, r: float) -> torch.Tensor:
     return torch.linalg.vector_norm(torch.clamp(q, min=0.0), dim=-1) + torch.clamp(q.max(dim=-1).values, max=0.0) - r
 
 
-def scene_sdf(p: torch.Tensor) -> torch.Tensor:
+def scene_sdf(p: torch.Tensor, include_plane: bool = True) -> torch.Tensor:
     # Sphere centered at (-0.8, -0.1, 2.2), radius 0.7
     ps = p - torch.tensor([-0.8, -0.1, 2.2], device=p.device, dtype=p.dtype)
     d1 = sd_sphere(ps, 0.7)
@@ -131,18 +131,21 @@ def scene_sdf(p: torch.Tensor) -> torch.Tensor:
     h = (0.5 + 0.5 * (d2 - d1) / k).clamp(0.0, 1.0)
     d = (1 - h) * d2 + h * d1 - k * h * (1 - h)
     # Combine with plane via standard min (no smoothing for crisp contact)
-    return torch.minimum(d, d_plane)
+    if include_plane:
+        return torch.minimum(d, d_plane)
+    else:
+        return d
 
 
-def estimate_normal(p: torch.Tensor) -> torch.Tensor:
+def estimate_normal(p: torch.Tensor, include_plane: bool = True) -> torch.Tensor:
     # Finite difference normal of SDF (vectorized)
     e = 1e-3
     dx = torch.tensor([e, 0, 0], device=p.device, dtype=p.dtype)
     dy = torch.tensor([0, e, 0], device=p.device, dtype=p.dtype)
     dz = torch.tensor([0, 0, e], device=p.device, dtype=p.dtype)
-    nx = scene_sdf(p + dx) - scene_sdf(p - dx)
-    ny = scene_sdf(p + dy) - scene_sdf(p - dy)
-    nz = scene_sdf(p + dz) - scene_sdf(p - dz)
+    nx = scene_sdf(p + dx, include_plane) - scene_sdf(p - dx, include_plane)
+    ny = scene_sdf(p + dy, include_plane) - scene_sdf(p - dy, include_plane)
+    nz = scene_sdf(p + dz, include_plane) - scene_sdf(p - dz, include_plane)
     n = torch.stack([nx, ny, nz], dim=-1)
     return n / (n.norm(dim=-1, keepdim=True) + 1e-12)
 
@@ -166,8 +169,8 @@ def which_object(p: torch.Tensor) -> torch.Tensor:
     return (d1 < d2).to(p.dtype)  # 1.0 if obj1 else 0.0
 
 
-def shade(p: torch.Tensor, vdir: torch.Tensor, device, dtype) -> torch.Tensor:
-    n = estimate_normal(p)
+def shade(p: torch.Tensor, vdir: torch.Tensor, device, dtype, include_plane: bool = True) -> torch.Tensor:
+    n = estimate_normal(p, include_plane)
     lpos = torch.tensor(light_pos, device=device, dtype=dtype)
     lcol = torch.tensor(light_col, device=device, dtype=dtype)
     ldir = lpos - p
@@ -194,6 +197,8 @@ def shade(p: torch.Tensor, vdir: torch.Tensor, device, dtype) -> torch.Tensor:
     d_obj = (1 - h) * d2 + h * d1 - k * h * (1 - h)
     d_plane = p[...,1] + 1.0
     is_plane = (d_plane <= d_obj)[..., None]
+    if not include_plane:
+        is_plane = torch.zeros_like(is_plane, dtype=torch.bool)
     grid_u = torch.floor((p[...,0] * 3.0) % 2.0)
     grid_v = torch.floor((p[...,2] * 3.0) % 2.0)
     grid = ((grid_u + grid_v) % 2.0)[..., None]
@@ -226,7 +231,8 @@ def render(pm: PMField,
            bend_strength: float = 1.0,
            orient: str = 'standard',
            device: str = 'cpu',
-           dtype=torch.float32) -> torch.Tensor:
+           dtype=torch.float32,
+           include_plane: bool = True) -> torch.Tensor:
     """
     Returns: image tensor [H,W,3] in [0,1].
     """
@@ -259,13 +265,33 @@ def render(pm: PMField,
         active_idx = torch.arange(idx.numel(), device=device)
         color = sky_background(ki).clone()
         hit_mask = torch.zeros(idx.numel(), dtype=torch.bool, device=device)
+        plane_hits = 0
+        object_hits = 0
         for _ in range(max_steps):
             if pi.numel() == 0:
                 break
-            d = scene_sdf(pi)
+            d = scene_sdf(pi, include_plane)
             hit = d < hit_epsilon
             if hit.any():
-                col = shade(pi[hit], ki[hit], device, dtype)
+                # Count plane vs object at hit points for diagnostics
+                hp = pi[hit]
+                # recompute object smooth-min vs plane
+                ps = hp - torch.tensor([-0.8, -0.1, 2.2], device=device, dtype=dtype)
+                d1 = sd_sphere(ps, 0.7)
+                pb = hp - torch.tensor([1.0, 0.2, 2.8], device=device, dtype=dtype)
+                d2 = sd_round_box(pb, torch.tensor([0.6, 0.4, 0.8], device=device, dtype=dtype), 0.15)
+                ksm = 0.25
+                hsm = (0.5 + 0.5 * (d2 - d1) / ksm).clamp(0.0, 1.0)
+                d_obj = (1 - hsm) * d2 + hsm * d1 - ksm * hsm * (1 - hsm)
+                d_plane_hit = hp[...,1] + 1.0
+                is_plane_hit = d_plane_hit <= d_obj
+                if include_plane:
+                    plane_hits += int(is_plane_hit.count_nonzero().item())
+                    object_hits += int((~is_plane_hit).count_nonzero().item())
+                else:
+                    object_hits += int(hit.count_nonzero().item())
+
+                col = shade(hp, ki[hit], device, dtype, include_plane)
                 color[active_idx[hit]] = col
                 hit_mask[active_idx[hit]] = True
                 keep = ~hit
@@ -302,20 +328,26 @@ def render(pm: PMField,
         # Any remaining active rays get background
         if active_idx.numel() > 0:
             color[active_idx] = bg
-        return color, hit_mask
+        return color, hit_mask, plane_hits, object_hits
 
     if chunk_size is None:
         idx = torch.arange(N, device=device)
-        col, mask = process_chunk(idx)
+        col, mask, ph, oh = process_chunk(idx)
         out[:] = col
         hit_mask_global[idx] = mask
+        plane_total = ph
+        object_total = oh
     else:
+        plane_total = 0
+        object_total = 0
         for start in range(0, N, chunk_size):
             end = min(start + chunk_size, N)
             idx = torch.arange(start, end, device=device)
-            col, mask = process_chunk(idx)
+            col, mask, ph, oh = process_chunk(idx)
             out[start:end] = col
             hit_mask_global[start:end] = mask
+            plane_total += ph
+            object_total += oh
 
     if orient == 'standard':
         img = out.view(H, W, 3)
@@ -325,7 +357,10 @@ def render(pm: PMField,
     hits = hit_mask_global.count_nonzero().item()
     total = N
     pct = 100.0 * hits / max(total, 1)
-    print(f"Hit pixels: {hits}/{total} ({pct:.2f}%)")
+    if include_plane:
+        print(f"Hit pixels: {hits}/{total} ({pct:.2f}%) | plane hits: {plane_total}, object hits: {object_total}")
+    else:
+        print(f"Hit pixels: {hits}/{total} ({pct:.2f}%) | object-only mode, hits: {object_total}")
     return img.clamp(0.0, 1.0)
 
 
@@ -346,11 +381,12 @@ def main():
     parser.add_argument('--device', type=str, default='auto', choices=['auto','cpu','cuda'])
     parser.add_argument('--dtype', type=str, default='fp32', choices=['fp16','fp32'])
     parser.add_argument('--no-bend', action='store_true', help='Disable PM curvature (debug)')
-    parser.add_argument('--rotate', type=str, default='none', choices=['none','90ccw','90cw','180'], help='Rotate final image for presentation')
+    parser.add_argument('--rotate', type=str, default='180', choices=['none','90ccw','90cw','180'], help='Rotate final image for presentation')
     parser.add_argument('--orient', type=str, default='standard', choices=['standard','legacy'], help='Camera/image mapping convention')
     parser.add_argument('--flip-x', action='store_true', help='Mirror final image horizontally')
     parser.add_argument('--flip-y', action='store_true', help='Mirror final image vertically')
     parser.add_argument('--bend-strength', type=float, default=1.0, help='Scale curvature strength (0..1 recommended)')
+    parser.add_argument('--no-plane', action='store_true', help='Disable the ground plane (debug objects)')
     args = parser.parse_args()
 
     dev = 'cuda' if (args.device == 'cuda' or (args.device == 'auto' and torch.cuda.is_available())) else 'cpu'
@@ -396,7 +432,8 @@ def main():
                  orient=args.orient,
                  chunk_size=args.chunk if args.chunk > 0 else None,
                  device=dev,
-                 dtype=dtype)
+                 dtype=dtype,
+                 include_plane=(not args.no_plane))
 
     # Gamma and save
     img_np = (img.clamp(0, 1) ** (1.0 / 2.2)).detach().cpu().numpy()
