@@ -10,10 +10,15 @@ Three-body flow topology (Sun–Earth–Moon) in a co-rotating frame.
 Install deps: pip install numpy scipy matplotlib
 """
 
-import numpy as np
-import matplotlib.pyplot as plt
-from matplotlib.patches import Circle
-from scipy.ndimage import minimum_filter
+try:
+    import numpy as np
+    import matplotlib.pyplot as plt
+    from matplotlib.patches import Circle
+    from scipy.ndimage import minimum_filter
+except ModuleNotFoundError as e:
+    print(f"Missing dependency: {e.name}")
+    print("Please install required packages, e.g.:\n    pip install numpy scipy matplotlib")
+    raise
 
 # ---------------------------
 # Config and domain
@@ -172,7 +177,8 @@ def plot_all(moon_xy, labels, Uo, Vo, S, tracer=None):
     for (iy, ix, lbl) in labels:
         px, py = x[ix], y[iy]
         if lbl == 'saddle':
-            ax.scatter(px, py, marker='x', c='yellow', s=60, zorder=6, label='saddle' if 'saddle' not in [l.get_text() for l in ax.legend_.texts] if ax.legend_ else True)
+            # don't try to conditionally set legend label here (complex inline conditional caused SyntaxError)
+            ax.scatter(px, py, marker='x', c='yellow', s=60, zorder=6)
         elif lbl.startswith('spiral'):
             ax.scatter(px, py, marker='o', facecolors='none', edgecolors='cyan', s=60, zorder=6)
         elif lbl == 'center':
