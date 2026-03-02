@@ -203,26 +203,29 @@ def weak_bending_deflection_numeric(M: float, b: float, z_max: float = 50.0, ste
     return index_deflection_numeric(M, b, mu=mu, z_max=z_max, steps=steps)
 
 
-def index_deflection_numeric(M: float, b: float, mu: float, z_max: float = 50.0, steps: int = 5000) -> float:
+def index_deflection_numeric(M: float, b: float, mu: float,
+                             z_max_factor: float = 200.0,
+                             steps: int = 5000) -> float:
     """
     Numerically estimate light deflection using the PM index model:
-        n(r) = 1 + mu * M / r,  ln n = ln(1 + mu M / r)
-    Small-angle approximation: d kx/dz ≈ ∂/∂x ln n, with x=b, y=0, z as path parameter.
-    Deflection α ≈ ∫ (∂ ln n / ∂x) dz over z in [-z_max, z_max].
+        n(r) = 1 + mu * M / r
+    with a z-window that scales with b so the integral recovers α ∝ 1/b.
     """
     import numpy as np
+    z_max = z_max_factor * b   # <-- key fix
 
     zs = np.linspace(-z_max, z_max, steps)
     dz = zs[1] - zs[0]
     alpha = 0.0
+
     for z in zs:
         r = math.sqrt(b * b + z * z) + 1e-30
         n_val = 1.0 + (mu * M) / r
         dndx = -(mu * M) * b / (r ** 3)
         dlnndx = dndx / n_val
         alpha += dlnndx * dz
-    return float(abs(alpha))
 
+    return float(abs(alpha))
 
 def fermat_deflection_static_index(M: float, b: float, mu: float, z_max: float = 5.0, steps: int = 5000) -> float:
     """
